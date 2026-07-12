@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 # Build each language's API reference with its native tool and drop the HTML
 # into static/sdk/<lang>/, which the Docusaurus site serves same-origin at
 # /sdk/<lang>/. "Coupled" build: the per-tool config lives here for now (later

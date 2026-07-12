@@ -1,0 +1,36 @@
+name: DCO
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    # Fork PRs from outside the org are pulled into a branch by a maintainer
+    # first, matching the other workflows' supply-chain guard.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Signed-off-by on every commit
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          fail=0
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            if ! git log -1 --format='%b' "$sha" | grep -qE '^Signed-off-by: .+ <.+@.+>'; then
+              subj=$(git log -1 --format='%s' "$sha")
+              echo "::error::commit $sha is missing a Signed-off-by trailer: $subj"
+              fail=1
+            fi
+          done < <(git rev-list "$base..$head")
+          if [ "$fail" -ne 0 ]; then
+            echo "Add sign-off with: git commit -s  (see CONTRIBUTING.md)"
+            exit 1
+          fi
+          echo "All commits are signed off."

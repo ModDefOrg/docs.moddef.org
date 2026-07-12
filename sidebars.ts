@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 // One sidebar per top-level section. Each doc page picks its sidebar via the

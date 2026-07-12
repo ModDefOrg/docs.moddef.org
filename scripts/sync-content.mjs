@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Generate docs pages from the moddef repo: the versioned spec, the stdlib
 // measurand catalog, and the CLI reference. Run before `docusaurus build`
 // (npm run sync). Outputs are committed so the site builds anywhere; CI

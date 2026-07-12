@@ -59,3 +59,10 @@ API docs, syncs content, builds the site, and deploys to GitHub Pages
 (`docs.moddef.org`, via `static/CNAME`). This is the **coupled** build: per-SDK
 doc-tool config lives in `scripts/build-sdk-docs.sh` for now; it can later move
 into each SDK repo's CI, publishing artifacts this site pulls at build time.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
+[CONTRIBUTING.md](CONTRIBUTING.md). The synced spec content is CC-BY-4.0 and the
+synced measurand and other stdlib data is CC0-1.0, under their upstream licenses
+in the [moddef](https://github.com/ModDefOrg/moddef) repository.
