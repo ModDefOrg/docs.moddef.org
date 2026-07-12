@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Manual trigger: the build pulls the spec, CLI, stdlib, and SDK docs from
+  # sibling repos, so redeploy from here when one of those updates.
+  workflow_dispatch:
 
 permissions:
   contents: read
