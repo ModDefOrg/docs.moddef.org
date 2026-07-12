@@ -112,6 +112,131 @@ function syncMeasurands() {
   write('docs/stdlib/measurands.mdx', out);
 }
 
+// --- OCPP alias catalog ----------------------------------------------------
+function syncOcppAliases() {
+  const src = join(moddef, 'stdlib', 'ocpp-aliases', '1.0.0', 'ocpp-aliases.moddef.yaml');
+  if (!existsSync(src)) return console.warn('ocpp-aliases not found, skipping');
+  const doc = yaml.load(readFileSync(src, 'utf8'));
+  const aliases = doc.measurand_aliases || [];
+  const qualifiers = (m) =>
+    ['direction', 'phase_ref', 'aggregation', 'location', 'accumulation']
+      .map((k) => m[k])
+      .filter(Boolean)
+      .map((v) => `\`${v}\``)
+      .join(' · ') || '—';
+  const rows = aliases
+    .map((a) => {
+      const m = a.maps_to || {};
+      return `| \`${a.alias}\` | \`${m.base_quantity || ''}\` | ${qualifiers(m)} |`;
+    })
+    .join('\n');
+  const out = [
+    '---',
+    'title: OCPP aliases',
+    'sidebar_label: OCPP aliases',
+    'slug: /stdlib/ocpp-aliases',
+    '---',
+    '',
+    '# OCPP alias catalog',
+    '',
+    'Maps OCPP 1.6 measurand names onto the ModDef semantic tuple model (spec',
+    '§24), so ModDef stays compatible with OCPP terminology without adopting it',
+    'as the core namespace. Import as `moddef:stdlib:ocpp-aliases:1.0.0` and',
+    'resolve OCPP names to [measurands](/stdlib/measurands).',
+    '',
+    `Synced from [\`moddef/stdlib\`](https://github.com/ModDefOrg/moddef/tree/main/stdlib/ocpp-aliases). ${aliases.length} aliases.`,
+    '',
+    '| OCPP name | Base quantity | Qualifiers |',
+    '| --- | --- | --- |',
+    rows,
+    '',
+  ].join('\n');
+  write('docs/stdlib/ocpp-aliases.mdx', out);
+}
+
+// --- Core enum library -----------------------------------------------------
+function syncCore() {
+  const src = join(moddef, 'stdlib', 'core', '1.0.0', 'core.moddef.yaml');
+  if (!existsSync(src)) return console.warn('core not found, skipping');
+  const doc = yaml.load(readFileSync(src, 'utf8'));
+  const enums = doc.enums || [];
+  const esc = (s) => (s || '').replace(/\|/g, '\\|');
+  const sections = enums
+    .map((e) => {
+      const head = `### \`${e.type_id}\`${e.name ? ` — ${e.name}` : ''}`;
+      const desc = e.description ? `\n${e.description}\n` : '';
+      const rows = (e.values || [])
+        .map((v) => `| ${v.value} | \`${v.name}\` | ${esc(v.description)} |`)
+        .join('\n');
+      return `${head}\n${desc}\n| Value | Name | Description |\n| --- | --- | --- |\n${rows}\n`;
+    })
+    .join('\n');
+  const out = [
+    '---',
+    'title: Core library',
+    'sidebar_label: Core enums',
+    'slug: /stdlib/core',
+    '---',
+    '',
+    '# Core library',
+    '',
+    'Common, reusable enum types (spec §20.1). Import as',
+    '`moddef:stdlib:core:1.0.0` and reference these by id from a point&apos;s',
+    '`value_type.enum_ref`.',
+    '',
+    `Synced from [\`moddef/stdlib\`](https://github.com/ModDefOrg/moddef/tree/main/stdlib/core). ${enums.length} enums.`,
+    '',
+    sections,
+  ].join('\n');
+  write('docs/stdlib/core.mdx', out);
+}
+
+// --- SunSpec starter library -----------------------------------------------
+function syncSunspec() {
+  const src = join(moddef, 'stdlib', 'sunspec', '1.0.0', 'sunspec.moddef.yaml');
+  if (!existsSync(src)) return console.warn('sunspec not found, skipping');
+  const doc = yaml.load(readFileSync(src, 'utf8'));
+  const esc = (s) => (s || '').replace(/\|/g, '\\|');
+  const blocks = (doc.devices || []).flatMap((d) => d.blocks || []);
+  const sections = blocks
+    .map((b) => {
+      const model = b.discovery?.model_id;
+      const head = `### ${b.name || b.block_id}${model != null ? ` (model ${model})` : ''}`;
+      const rows = (b.points || [])
+        .map((p) => {
+          const off =
+            p.mapping?.model_relative_offset ?? p.mapping?.offset ?? '';
+          return `| \`${p.point_id}\` | ${esc(p.name)} | \`${p.storage_type || ''}\` | ${p.unit ? `\`${p.unit}\`` : '—'} | ${off} |`;
+        })
+        .join('\n');
+      return `${head}\n\n| Point | Name | Storage | Unit | Offset* |\n| --- | --- | --- | --- | --- |\n${rows}\n`;
+    })
+    .join('\n');
+  const out = [
+    '---',
+    'title: SunSpec library',
+    'sidebar_label: SunSpec',
+    'slug: /stdlib/sunspec',
+    '---',
+    '',
+    '# SunSpec starter library',
+    '',
+    'A starter SunSpec mapping (spec §20.3) demonstrating the v0.4 constructs',
+    'the SunSpec ecosystem needs: model-chain [discovery](/guide/concepts/discovery)',
+    'with model-relative offsets, and register-referenced',
+    '[scale factors](/guide/concepts/transforms#register-referenced-scale-factors-sunspec).',
+    'Import as `moddef:stdlib:sunspec:1.0.0`. Covers the Common model (1) and the',
+    'single-phase inverter model (103); more models are future work.',
+    '',
+    `Synced from [\`moddef/stdlib\`](https://github.com/ModDefOrg/moddef/tree/main/stdlib/sunspec).`,
+    '',
+    sections,
+    '\\* Offset is relative to the model&apos;s ID register (spec §7.3).',
+    '',
+  ].join('\n');
+  write('docs/stdlib/sunspec.mdx', out);
+}
+
 // --- Linter rules reference ------------------------------------------------
 function syncLintRules() {
   const src = join(moddef, 'fixtures', 'manifest.yaml');
@@ -220,5 +345,8 @@ function syncCli() {
 
 syncSpec();
 syncMeasurands();
+syncOcppAliases();
+syncCore();
+syncSunspec();
 syncLintRules();
 syncCli();
