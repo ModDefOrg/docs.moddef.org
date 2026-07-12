@@ -6,7 +6,7 @@ sidebar_position: 1
 # What is a ModDef document?
 
 A ModDef document is a declarative description of a device: its identity, its
-register blocks, and the points within them. It is **data, not code** — the
+register blocks, and the points within them. It is **data, not code**: the
 same file drives every runtime.
 
 ## Three encodings, one model
@@ -16,7 +16,7 @@ same Protobuf schema:
 
 | Extension | Form | Use |
 | --- | --- | --- |
-| `.moddef.yaml` | YAML (protojson semantics) | authoring — comments, readable diffs |
+| `.moddef.yaml` | YAML (protojson semantics) | authoring (comments, readable diffs) |
 | `.moddef.json` | JSON (protojson) | tooling interchange |
 | `.moddef` | Protobuf binary | compact, canonical, embeddable |
 
@@ -57,7 +57,7 @@ devices:
 ## Validation
 
 Documents are validated against numbered rules (`MDE***` errors, `MDW***`
-warnings) — duplicate ids, overlapping mappings, unresolved references,
+warnings): duplicate ids, overlapping mappings, unresolved references,
 zero-denominator scales, and so on. Unknown fields and invalid enum values are
 rejected at parse time by every runtime, so a document that loads in one
 language loads in all of them.

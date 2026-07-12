@@ -10,10 +10,10 @@ Points that control the device carry an **access mode** and, when writable,
 
 ## Access modes
 
-- `READ_ONLY` — telemetry; writes are rejected.
-- `READ_WRITE` — a settable value you can also read back.
-- `WRITE_ONLY` — a setpoint with no read path.
-- `COMMAND` — a trigger (e.g. "reset alarms").
+- `READ_ONLY`: telemetry; writes are rejected.
+- `READ_WRITE`: a settable value you can also read back.
+- `WRITE_ONLY`: a setpoint with no read path.
+- `COMMAND`: a trigger (e.g. "reset alarms").
 
 Attempting to write a `READ_ONLY` point is an error in every language, caught
 before any I/O.
@@ -41,8 +41,8 @@ write:
 ```
 
 The runtime validates the engineering-unit value against these rules and
-returns a typed error — *below minimum*, *above maximum*, *not a multiple of
-step*, *not in allowed values* — instead of writing an out-of-range setpoint.
+returns a typed error (*below minimum*, *above maximum*, *not a multiple of
+step*, or *not in allowed values*) instead of writing an out-of-range setpoint.
 
 ## The write path
 

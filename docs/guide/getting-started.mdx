@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 
 # Getting started
 
-A **ModDef document** describes a device's Modbus register map — types, byte
+A **ModDef document** describes a device's Modbus register map: types, byte
 order, scaling, sentinels, write rules, and the semantic measurand each point
 reports. Every ModDef runtime reads the same document and decodes it
 identically.
@@ -50,7 +50,7 @@ pip install "moddef[pymodbus]"
 <TabItem value="c" label="C">
 
 Vendor `include/` and `src/` from
-[`moddef-c`](https://github.com/ModDefOrg/moddef-c) into your firmware tree —
+[`moddef-c`](https://github.com/ModDefOrg/moddef-c) into your firmware tree;
 there is no build system to adopt. Convert your `.moddef.yaml` to binary
 host-side and embed it (or load it from flash).
 
@@ -58,7 +58,7 @@ host-side and embed it (or load it from flash).
 <TabItem value="cpp" label="C++">
 
 ```cmake
-# moddef-cpp wraps moddef-c (a submodule) — C++23.
+# moddef-cpp wraps moddef-c (a submodule); needs C++23.
 add_subdirectory(moddef-cpp)
 target_link_libraries(app PRIVATE moddef::cpp)
 ```
@@ -143,7 +143,7 @@ if (auto v = dev->read("pv1_voltage"); v && v->as_f64())
 
 The runtime read the raw register `2305`, applied the point's `scale` of
 `1/10`, and gave you `230.5`. You never wrote the offset `3` or the divisor
-`10` in your code — they live in the document.
+`10` in your code; they live in the document.
 
 ## Next steps
 

@@ -27,10 +27,10 @@ it with `length_words`.
 
 Multi-register values need two orderings, both defaulting to big-endian:
 
-- **`byte_order`** — byte order within a single 16-bit word (`BIG_ENDIAN` /
+- **`byte_order`**: byte order within a single 16-bit word (`BIG_ENDIAN` or
   `LITTLE_ENDIAN`).
-- **`word_order`** — order of the words themselves for values wider than one
-  register (`WORD_BIG_ENDIAN` / `WORD_LITTLE_ENDIAN`).
+- **`word_order`**: order of the words themselves for values wider than one
+  register (`WORD_BIG_ENDIAN` or `WORD_LITTLE_ENDIAN`).
 
 ```yaml
 # 32-bit value, high word first, big-endian bytes (the common case)
@@ -42,11 +42,11 @@ mapping: { space: HOLDING_REGISTER, offset: 100, length_words: 2,
 
 `value_type` is a tagged choice:
 
-- `{ primitive: ... }` — `BOOL`, `INT32/64`, `UINT32/64`, `FLOAT32/64`,
+- `{ primitive: ... }`: `BOOL`, `INT32/64`, `UINT32/64`, `FLOAT32/64`,
   `DECIMAL`, `STRING`, `BYTES`, `DATETIME`, `FLAGS`.
-- `{ enum_ref: { type_id } }` — a named enum defined in the document.
-- `{ struct_ref: ... }` / `{ array: ... }` — composite logical types.
-- `{ flags: { bits } }` — an independent bit set (§13.2).
+- `{ enum_ref: { type_id } }`: a named enum defined in the document.
+- `{ struct_ref: ... }` or `{ array: ... }`: composite logical types.
+- `{ flags: { bits } }`: an independent bit set (§13.2).
 
 `DECIMAL` is the workhorse: an integer register scaled by a
 [transform](./transforms.mdx) into an engineering value. The decoded surface is
@@ -55,9 +55,9 @@ hatch (`decode_raw`) for billing counters that must not lose precision.
 
 ## Sub-register fields
 
-A single register can pack several values — for example a time slot with the
-hour in the high byte and the minute in the low byte. **Register fields** name
-each bit range so you get a struct instead of a raw number:
+A single register can pack several values, such as a time slot with the hour
+in the high byte and the minute in the low byte. **Register fields** name each
+bit range so you get a struct instead of a raw number:
 
 ```yaml
 fields:

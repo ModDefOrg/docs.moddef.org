@@ -44,10 +44,10 @@ the referenced point automatically before decoding.
 
 ## Selector cases
 
-Some registers change meaning based on another register — for example an energy
-counter whose unit (Wh vs kWh) depends on a format flag. `selector_ref` picks a
-per-case scale/offset, falling back to the point's own transform when no case
-matches:
+Some registers change meaning based on another register. For example, an energy
+counter's unit (Wh or kWh) can depend on a format flag. `selector_ref` picks a
+per-case scale and offset, falling back to the point's own transform when no
+case matches:
 
 ```yaml
 selector_ref:
@@ -60,9 +60,9 @@ selector_ref:
 ## Composed values
 
 `COMPOSED` storage reconstructs `mantissa × base^exponent` from two sub-windows
-of the same register span — the form a few meters use for wide-dynamic-range
+of the same register span. A few meters use this form for wide-dynamic-range
 readings. It is read-only; the mantissa and exponent offsets are part of the
 mapping.
 
 All of these are defined once in the document and applied identically by every
-runtime — the conformance suite pins them to the same numeric results.
+runtime, and the conformance suite pins them to the same numeric results.

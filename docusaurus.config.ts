@@ -8,7 +8,7 @@ const GITHUB_ORG = 'https://github.com/ModDefOrg';
 
 const config: Config = {
   title: 'ModDef',
-  tagline: 'Declarative Modbus device definitions — one schema, every language',
+  tagline: 'Declarative Modbus device definitions: one schema, every language',
   favicon: 'img/favicon.ico',
 
   future: {

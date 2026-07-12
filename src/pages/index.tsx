@@ -41,7 +41,7 @@ const SDKS: {name: string; to: string; lang: string}[] = [
   {name: 'C++', to: 'pathname:///sdk/cpp/', lang: 'C++23'},
 ];
 
-const SAMPLE = `# growatt-sph.moddef.yaml — one definition, every runtime
+const SAMPLE = `# growatt-sph.moddef.yaml: one definition, every runtime
 - point_id: pv1_voltage
   storage_type: U16
   value_type: { primitive: DECIMAL }
@@ -57,7 +57,7 @@ function Pitch() {
           <div className="col col--6">
             <Heading as="h2">Describe the device once</Heading>
             <p>
-              A ModDef document is a declarative map of a device&apos;s Modbus registers —
+              A ModDef document is a declarative map of a device&apos;s Modbus registers:
               storage types, byte order, scaling, sentinels, write constraints, and the
               semantic measurand each point reports. It is the same file whether you read it
               from Go, TypeScript, Rust, Python, C, or C++.
@@ -142,13 +142,13 @@ function Usage() {
             <Heading as="h2">Use it from your stack</Heading>
             <p>
               Load the definition, bind a transport, and read a point by name. The runtime
-              applies the offset, scaling, byte order, and sentinels from the document — you
+              applies the offset, scaling, byte order, and sentinels from the document, so you
               never repeat them in code. The same call returns <code>230.5</code> in every
               language.
             </p>
             <p>
-              Or query by meaning with a measurand — &ldquo;grid frequency&rdquo;,
-              &ldquo;L1-N voltage&rdquo; — and let the runtime find the point.
+              Or query by meaning with a measurand (&ldquo;grid frequency&rdquo;,
+              &ldquo;L1-N voltage&rdquo;) and let the runtime find the point.
             </p>
           </div>
           <div className="col col--7">
@@ -197,7 +197,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={siteConfig.title}
-      description="Declarative Modbus device definitions — one schema, every language.">
+      description="Declarative Modbus device definitions: one schema, every language.">
       <HomepageHeader />
       <main>
         <Pitch />

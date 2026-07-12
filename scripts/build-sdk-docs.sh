@@ -6,7 +6,7 @@
 #
 # Expects sibling checkouts one level up: ../moddef, ../moddef-ts, ../moddef-rs,
 # ../moddef-py, ../moddef-c, ../moddef-cpp. Each language is best-effort: a
-# missing repo or tool logs a warning and — crucially — leaves the committed
+# missing repo or tool logs a warning and, crucially, leaves the committed
 # placeholder in place. Every tool builds into a temp dir that is swapped into
 # static/sdk/<lang>/ only on success, so a failing build never wipes the route.
 set -u
@@ -94,8 +94,8 @@ html_theme = "furo"
 html_title = "moddef (Python)"
 PY
   cat > "$src/index.rst" <<'RST'
-moddef — Python API
-===================
+moddef Python API
+=================
 
 The Python runtime for ModDef. See the `guide </guide/getting-started>`_ for
 usage; this is the generated API reference.

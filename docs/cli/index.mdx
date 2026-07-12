@@ -10,8 +10,8 @@ slug: /cli/
 inspect documents, build binary `.moddef` files, generate typed clients, and
 package reusable stdlib bundles.
 
-- **[Linter rules](/cli/lint-rules)** — every `MDE***` / `MDW***` code `moddef lint` reports.
-- **[Full `--help` output](/cli/reference)** — the verbatim top-level help.
+- **[Linter rules](/cli/lint-rules)**: every `MDE***` and `MDW***` code `moddef lint` reports.
+- **[Full `--help` output](/cli/reference)**: the verbatim top-level help.
 
 ## Install
 
@@ -24,7 +24,7 @@ git clone https://github.com/ModDefOrg/moddef
 cd moddef && buf generate && go build -o moddef ./go/cmd/moddef
 ```
 
-`go install` puts the binary in `$(go env GOPATH)/bin` — make sure that's on
+`go install` puts the binary in `$(go env GOPATH)/bin`, so make sure that's on
 your `PATH`. Building from source needs [`buf`](https://buf.build) first, since
 the CLI imports generated Protobuf code.
 
@@ -32,8 +32,8 @@ the CLI imports generated Protobuf code.
 
 ### `moddef convert <in> <out>`
 
-Convert a document between the three encodings — `.moddef.yaml`,
-`.moddef.json`, and binary `.moddef` — inferring formats from the file
+Convert a document between the three encodings (`.moddef.yaml`,
+`.moddef.json`, and binary `.moddef`), inferring formats from the file
 extensions. Lossless in every direction.
 
 ```bash
@@ -52,8 +52,8 @@ moddef lint growatt-sph.moddef.yaml
 
 ### `moddef inspect <file>`
 
-Print a human-readable summary of a document — devices, blocks, points, and
-their mappings — for a quick look without opening the file.
+Print a human-readable summary of a document (devices, blocks, points, and
+their mappings) for a quick look without opening the file.
 
 ```bash
 moddef inspect growatt-sph.moddef.yaml
@@ -73,7 +73,7 @@ moddef build growatt-sph.moddef.yaml            # → growatt-sph.moddef
 
 Rewrite a document in canonical form (stable field order, normalized
 whitespace). `--check` reports whether the file is already canonical without
-writing — handy in CI.
+writing, which is handy in CI.
 
 ```bash
 moddef fmt growatt-sph.moddef.yaml              # rewrite in place
@@ -93,7 +93,7 @@ moddef gen --lang go --package inverter \
 ### `moddef pack <dir> [--out <zip>]`
 
 Build a reusable package (e.g. an stdlib bundle) from a directory containing a
-package manifest — the mechanism behind `moddef:stdlib:*` imports.
+package manifest. This is the mechanism behind `moddef:stdlib:*` imports.
 
 ```bash
 moddef pack stdlib/measurands --out measurands-1.0.0.zip

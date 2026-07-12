@@ -27,7 +27,7 @@ function syncSpec() {
     return;
   }
   let body = readFileSync(src, 'utf8');
-  // Drop the leading H1 — the frontmatter title supplies it.
+  // Drop the leading H1; the frontmatter title supplies it.
   body = body.replace(/^#\s+.*\n/, '');
 
   // §27 dumps the whole ~500-line protobuf schema inline. The canonical
@@ -38,13 +38,13 @@ function syncSpec() {
     'The canonical schema is the Protobuf definition in',
     `[\`moddef/proto/moddef/v1\`](https://github.com/ModDefOrg/moddef/tree/main/proto/moddef/v1):`,
     '',
-    `- [\`types.proto\`](${protoBase}/types.proto) — primitive/value types, enums, transports`,
-    `- [\`mapping.proto\`](${protoBase}/mapping.proto) — physical mapping, transforms, fields, strings, write semantics`,
-    `- [\`device.proto\`](${protoBase}/device.proto) — device profiles, register blocks, points, variants`,
-    `- [\`measurand.proto\`](${protoBase}/measurand.proto) — the measurand model and aliases`,
-    `- [\`document.proto\`](${protoBase}/document.proto) — the top-level document and imports`,
+    `- [\`types.proto\`](${protoBase}/types.proto): primitive and value types, enums, transports`,
+    `- [\`mapping.proto\`](${protoBase}/mapping.proto): physical mapping, transforms, fields, strings, write semantics`,
+    `- [\`device.proto\`](${protoBase}/device.proto): device profiles, register blocks, points, variants`,
+    `- [\`measurand.proto\`](${protoBase}/measurand.proto): the measurand model and aliases`,
+    `- [\`document.proto\`](${protoBase}/document.proto): the top-level document and imports`,
     '',
-    'The full schema is omitted here to keep the rendered spec readable — the',
+    'The full schema is omitted here to keep the rendered spec readable; the',
     '`.proto` files above are the source of truth.',
   ].join('\n');
   body = body.replace(
@@ -81,7 +81,7 @@ function syncMeasurands() {
   const doc = yaml.load(readFileSync(src, 'utf8'));
   const rows = (doc.measurands || [])
     .map((m) => {
-      const unit = m.canonical_unit === '1' ? '— (ratio)' : `\`${m.canonical_unit}\``;
+      const unit = m.canonical_unit === '1' ? '`1` (ratio)' : `\`${m.canonical_unit}\``;
       const desc = (m.description || '').replace(/\|/g, '\\|');
       return `| \`${m.base_quantity}\` | ${m.name} | ${unit} | ${desc} |`;
     })
@@ -123,7 +123,7 @@ function syncOcppAliases() {
       .map((k) => m[k])
       .filter(Boolean)
       .map((v) => `\`${v}\``)
-      .join(' · ') || '—';
+      .join(' · ') || 'none';
   const rows = aliases
     .map((a) => {
       const m = a.maps_to || {};
@@ -163,7 +163,7 @@ function syncCore() {
   const esc = (s) => (s || '').replace(/\|/g, '\\|');
   const sections = enums
     .map((e) => {
-      const head = `### \`${e.type_id}\`${e.name ? ` — ${e.name}` : ''}`;
+      const head = `### \`${e.type_id}\`${e.name ? ` (${e.name})` : ''}`;
       const desc = e.description ? `\n${e.description}\n` : '';
       const rows = (e.values || [])
         .map((v) => `| ${v.value} | \`${v.name}\` | ${esc(v.description)} |`)
@@ -206,7 +206,7 @@ function syncSunspec() {
         .map((p) => {
           const off =
             p.mapping?.model_relative_offset ?? p.mapping?.offset ?? '';
-          return `| \`${p.point_id}\` | ${esc(p.name)} | \`${p.storage_type || ''}\` | ${p.unit ? `\`${p.unit}\`` : '—'} | ${off} |`;
+          return `| \`${p.point_id}\` | ${esc(p.name)} | \`${p.storage_type || ''}\` | ${p.unit ? `\`${p.unit}\`` : 'none'} | ${off} |`;
         })
         .join('\n');
       return `${head}\n\n| Point | Name | Storage | Unit | Offset* |\n| --- | --- | --- | --- | --- |\n${rows}\n`;
@@ -276,9 +276,9 @@ function syncLintRules() {
     '',
     'Every rule `moddef lint` can report. Codes are stable identifiers:',
     '',
-    '- **`MDE***`** — errors; a document that trips one is invalid (exit code 1).',
-    '- **`MDW***`** — warnings; advisory, the document still validates (exit code 0).',
-    '- **`PARSE_*`** — schema-level parse failures (unknown field, bad enum, malformed oneof).',
+    '- **`MDE***`**: errors; a document that trips one is invalid (exit code 1).',
+    '- **`MDW***`**: warnings; advisory, the document still validates (exit code 0).',
+    '- **`PARSE_*`**: schema-level parse failures (unknown field, bad enum, malformed oneof).',
     '',
     'See [§28 Validation Rules](/spec/v0.4#28-validation-rules) for the normative',
     'descriptions, and the [`moddef` CLI](/cli/reference) for running the linter.',
@@ -307,7 +307,7 @@ function syncCli() {
   try {
     const bin = '/tmp/moddef-docs-cli';
     // The CLI imports the generated protobuf package (go/genpb), which is a
-    // build artifact — run `buf generate` in the moddef checkout first
+    // build artifact, so run `buf generate` in the moddef checkout first
     // (CI does; locally the dev tree usually already has it).
     execFileSync('go', ['build', '-o', bin, './cmd/moddef'], {cwd: join(moddef, 'go')});
     help = execFileSync(bin, ['--help'], {encoding: 'utf8'});
@@ -332,7 +332,7 @@ function syncCli() {
     'slug: /cli/reference',
     '---',
     '',
-    '# `moddef` — full `--help`',
+    '# Full `moddef --help`',
     '',
     'The verbatim top-level help. See the [command reference](/cli/) for each',
     'subcommand with examples.',
