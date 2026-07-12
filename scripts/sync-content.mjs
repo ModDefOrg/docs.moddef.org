@@ -95,12 +95,25 @@ function syncCli() {
   let help;
   try {
     const bin = '/tmp/moddef-docs-cli';
+    // The CLI imports the generated protobuf package (go/genpb), which is a
+    // build artifact — run `buf generate` in the moddef checkout first
+    // (CI does; locally the dev tree usually already has it).
     execFileSync('go', ['build', '-o', bin, './cmd/moddef'], {cwd: join(moddef, 'go')});
     help = execFileSync(bin, ['--help'], {encoding: 'utf8'});
   } catch (e) {
-    console.warn('CLI build/help failed, skipping:', e.message);
-    return;
+    console.warn('CLI build/help failed, writing a fallback page:', e.message);
   }
+  const body = help
+    ? ['The reference command-line tool (Go). Synced from its `--help` output.', '', '```text', help.trimEnd(), '```']
+    : [
+        ':::note',
+        'The generated CLI reference is unavailable in this build. See the',
+        '[`moddef` repository](https://github.com/ModDefOrg/moddef) for the',
+        'command-line tool.',
+        ':::',
+      ];
+  // Always write the page so `/cli/` links to it resolve (a missing page is a
+  // hard build error under onBrokenLinks: throw).
   const out = [
     '---',
     'title: CLI reference',
@@ -110,11 +123,7 @@ function syncCli() {
     '',
     '# `moddef` CLI',
     '',
-    'The reference command-line tool (Go). Synced from its `--help` output.',
-    '',
-    '```text',
-    help.trimEnd(),
-    '```',
+    ...body,
     '',
   ].join('\n');
   write('docs/cli/reference.mdx', out);
