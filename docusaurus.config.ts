@@ -74,6 +74,7 @@ const config: Config = {
         {to: '/guide/getting-started', label: 'Guide', position: 'left'},
         {to: '/spec/', label: 'Spec', position: 'left'},
         {to: '/stdlib/measurands', label: 'Measurands', position: 'left'},
+        {to: '/devices', label: 'Devices', position: 'left'},
         {to: '/cli/', label: 'CLI', position: 'left'},
         {to: '/sdk/', label: 'SDKs', position: 'left'},
         {href: GITHUB_ORG, label: 'GitHub', position: 'right'},
@@ -88,6 +89,7 @@ const config: Config = {
             {label: 'Getting started', to: '/guide/getting-started'},
             {label: 'Specification', to: '/spec/'},
             {label: 'Measurand catalog', to: '/stdlib/measurands'},
+            {label: 'Device browser', to: '/devices'},
           ],
         },
         {

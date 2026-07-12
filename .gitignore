@@ -27,6 +27,7 @@ yarn-error.log*
 /docs/stdlib/sunspec.mdx
 /docs/cli/reference.mdx
 /docs/cli/lint-rules.mdx
+/docs/devices/browser.mdx
 
 # The real per-language API docs are generated into static/sdk/<lang>/ by the
 # coupled docs build and deployed, never committed — only the placeholder

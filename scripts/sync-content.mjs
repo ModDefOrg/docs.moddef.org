@@ -13,6 +13,7 @@ import yaml from 'js-yaml';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const moddef = join(root, '..', 'moddef');
+const devices = join(root, '..', 'devices');
 
 function write(rel, content) {
   const path = join(root, rel);
@@ -345,6 +346,48 @@ function syncCli() {
   write('docs/cli/reference.mdx', out);
 }
 
+// --- Device registry -------------------------------------------------------
+function syncDevices() {
+  const src = join(devices, 'registry.yaml');
+  if (!existsSync(src)) return console.warn('devices registry not found, skipping');
+  const reg = yaml.load(readFileSync(src, 'utf8'));
+  // Map registry.yaml entries to the shape DeviceBrowser expects (camelCase).
+  const entries = (reg.devices || []).map((d) => ({
+    vendor: d.vendor,
+    model: d.model,
+    category: d.category,
+    docId: d.doc_id,
+    profile: d.profile,
+    transports: d.transports || [],
+    points: d.points ?? 0,
+    status: d.status || 'unknown',
+    sourceUrl: d.source_url || '',
+    measurands: d.measurands || [],
+  }));
+  const out = [
+    '---',
+    'title: Device browser',
+    'sidebar_label: Device browser',
+    'slug: /devices',
+    '---',
+    '',
+    'import DeviceBrowser from \'@site/src/components/DeviceBrowser\';',
+    '',
+    '# Device browser',
+    '',
+    'Ready-to-use ModDef profiles for real hardware, curated in the',
+    `[\`devices\`](https://github.com/ModDefOrg/devices) registry (v${
+      reg.version ?? 1
+    }). Load one with any SDK and read points by name, no register map required.`,
+    '',
+    `export const DEVICES = ${JSON.stringify(entries)};`,
+    '',
+    '<DeviceBrowser devices={DEVICES} />',
+    '',
+  ].join('\n');
+  write('docs/devices/browser.mdx', out);
+}
+
 syncSpec();
 syncMeasurands();
 syncOcppAliases();
@@ -352,3 +395,4 @@ syncCore();
 syncSunspec();
 syncLintRules();
 syncCli();
+syncDevices();
