@@ -1,0 +1,23 @@
+---
+title: CLI
+sidebar_position: 1
+slug: /cli/
+---
+
+# Command-line tool
+
+`moddef` is the reference command-line tool: convert between encodings, lint and
+inspect documents, build binary `.moddef` files, generate typed clients, and
+package reusable stdlib bundles.
+
+- **[Reference](/cli/reference)** — every subcommand, from the tool's own `--help`.
+
+```bash
+# convert, validate, and inspect a device definition
+moddef convert growatt-sph.moddef.yaml growatt-sph.moddef
+moddef lint growatt-sph.moddef.yaml
+moddef inspect growatt-sph.moddef.yaml
+```
+
+The CLI ships with the [`moddef`](https://github.com/ModDefOrg/moddef)
+reference implementation (Go).

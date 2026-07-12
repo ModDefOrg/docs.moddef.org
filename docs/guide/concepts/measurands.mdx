@@ -1,0 +1,53 @@
+---
+title: Measurands
+sidebar_position: 4
+---
+
+# Measurands
+
+An address tells you *where* a value is. A **measurand** tells you *what it is*.
+Measurands are ModDef's semantic layer: they let an application ask for "grid
+frequency" or "L1-N voltage" without knowing any device's register map.
+
+## The semantic tuple
+
+A measurand is a base quantity plus optional qualifiers:
+
+- **`base_quantity`** — `voltage`, `active_power`, `frequency`, `energy_active`, …
+- **`direction`** — `IMPORT`, `EXPORT`, `NET`, `CHARGE`, `DISCHARGE`, …
+- **`phase_ref`** — `L1_N`, `L2_L3`, `N`, …
+- **`aggregation`** — `TOTAL`, `AVERAGE`, `INSTANTANEOUS`, …
+- **`location`** — `GRID`, `BATTERY`, `PV`, `INVERTER`, …
+- **`accumulation`** — `LIFETIME`, `DAILY`, `SESSION`, …
+
+A point attaches one to itself:
+
+```yaml
+measurand:
+  base_quantity: voltage
+  phase_ref: L1_N
+```
+
+The base quantities and their canonical units come from the standard
+[measurand catalog](/stdlib/measurands), imported as
+`moddef:stdlib:measurands:1.0.0`. OCPP-style names map onto the same tuples via
+the `ocpp-aliases` package.
+
+## Querying by meaning
+
+Instead of `read_point("voltage_l1")`, ask for the measurand and let the
+runtime find the matching point:
+
+```python
+await dev.read_measurand(MeasurandQuery("frequency"))
+await dev.read_measurand(MeasurandQuery("voltage", phase_ref=PhaseRef.L1_N))
+```
+
+Unspecified qualifiers are wildcards. If exactly one point matches, you get its
+value; if several match an under-qualified query, the runtime raises an
+**ambiguous measurand** error listing the candidates, so you narrow the query
+rather than silently reading the wrong register.
+
+This is what makes one application work across a fleet of different devices: the
+device definitions differ, but "give me active power at the grid connection" is
+the same request everywhere.

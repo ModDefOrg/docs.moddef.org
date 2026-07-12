@@ -1,0 +1,66 @@
+---
+title: What is a ModDef document?
+sidebar_position: 1
+---
+
+# What is a ModDef document?
+
+A ModDef document is a declarative description of a device: its identity, its
+register blocks, and the points within them. It is **data, not code** — the
+same file drives every runtime.
+
+## Three encodings, one model
+
+A document has three interchangeable encodings, all lossless round-trips of the
+same Protobuf schema:
+
+| Extension | Form | Use |
+| --- | --- | --- |
+| `.moddef.yaml` | YAML (protojson semantics) | authoring — comments, readable diffs |
+| `.moddef.json` | JSON (protojson) | tooling interchange |
+| `.moddef` | Protobuf binary | compact, canonical, embeddable |
+
+The binary form is deterministic: two runtimes serialize the same document to
+byte-identical output. Embedded targets parse the binary form directly; the
+YAML and JSON forms are host-side conveniences.
+
+## Structure
+
+```yaml
+doc_id: growatt.sph
+version: 2.0.0
+imports:
+  - uri: moddef:stdlib:measurands:1.0.0
+devices:
+  - device_id: growatt-sph
+    vendor: Growatt
+    blocks:
+      - block_id: live
+        space: INPUT_REGISTER
+        points:
+          - point_id: pv1_voltage
+            storage_type: U16
+            value_type: { primitive: DECIMAL }
+            mapping: { space: INPUT_REGISTER, offset: 3 }
+            transform: { scale: { numerator: 1, denominator: 10 } }
+            measurand: { base_quantity: voltage }
+```
+
+- A **document** carries reusable definitions (enums, structs, measurands) and
+  one or more device profiles.
+- A **device profile** groups **register blocks**.
+- A **block** is a contiguous (or dynamically discovered) span in one address
+  space, containing **points**.
+- A **point** is one user-visible value: what to read, how to decode it, and
+  what it means.
+
+## Validation
+
+Documents are validated against numbered rules (`MDE***` errors, `MDW***`
+warnings) — duplicate ids, overlapping mappings, unresolved references,
+zero-denominator scales, and so on. Unknown fields and invalid enum values are
+rejected at parse time by every runtime, so a document that loads in one
+language loads in all of them.
+
+See the [specification](/spec/) for the normative structure and the full rule
+list.

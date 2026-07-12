@@ -1,0 +1,9 @@
+{
+  "label": "Concepts",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "title": "Concepts",
+    "description": "How a ModDef document models a device, one topic at a time."
+  }
+}

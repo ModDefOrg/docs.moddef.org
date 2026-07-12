@@ -1,0 +1,133 @@
+---
+title: Getting started
+sidebar_position: 2
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Getting started
+
+A **ModDef document** describes a device's Modbus register map — types, byte
+order, scaling, sentinels, write rules, and the semantic measurand each point
+reports. Every ModDef runtime reads the same document and decodes it
+identically.
+
+This page reads one point, `pv1_voltage`, from a Growatt SPH inverter over
+Modbus TCP. Swap in your own transport details as needed.
+
+## Install
+
+<Tabs groupId="lang" queryString>
+<TabItem value="go" label="Go">
+
+```bash
+go get github.com/ModDefOrg/moddef/go
+```
+
+</TabItem>
+<TabItem value="ts" label="TypeScript">
+
+```bash
+npm install @moddef/core @moddef/transport-modbus-serial
+```
+
+</TabItem>
+<TabItem value="rust" label="Rust">
+
+```bash
+cargo add moddef-core moddef-tokio-modbus
+```
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+```bash
+pip install "moddef[pymodbus]"
+```
+
+</TabItem>
+<TabItem value="c" label="C">
+
+Vendor `include/` and `src/` from
+[`moddef-c`](https://github.com/ModDefOrg/moddef-c) into your firmware tree —
+there is no build system to adopt. Convert your `.moddef.yaml` to binary
+host-side and embed it (or load it from flash).
+
+</TabItem>
+</Tabs>
+
+## Read a point
+
+<Tabs groupId="lang" queryString>
+<TabItem value="go" label="Go">
+
+```go
+doc, _ := moddef.Load("growatt-sph.moddef.yaml")
+dev, _ := client.New(doc, "growatt-sph", transport) // your modbus.Transport
+v, _ := dev.ReadPoint(ctx, "pv1_voltage")
+fmt.Println(v) // 230.5
+```
+
+</TabItem>
+<TabItem value="ts" label="TypeScript">
+
+```ts
+import {Device} from '@moddef/core';
+import {loadDocument} from '@moddef/core/node';
+
+const doc = await loadDocument('growatt-sph.moddef.yaml');
+const dev = Device.create(doc, 'growatt-sph', transport);
+console.log(await dev.readPoint('pv1_voltage')); // 230.5
+```
+
+</TabItem>
+<TabItem value="rust" label="Rust">
+
+```rust
+let doc = moddef_core::load("growatt-sph.moddef.yaml")?;
+let transport = TokioModbusTransport::tcp("192.168.1.50:502".parse()?, Options::default()).await?;
+let mut dev = Device::new(&doc, Some("growatt-sph"), transport)?;
+let v = dev.read_point("pv1_voltage").await?; // DecodedValue::F64(230.5)
+```
+
+</TabItem>
+<TabItem value="python" label="Python">
+
+```python
+from moddef import Device, load
+from moddef.pymodbus import Options, PymodbusTransport
+
+doc = load("growatt-sph.moddef.yaml")
+transport = await PymodbusTransport.tcp("192.168.1.50", options=Options())
+dev = Device.create(doc, "growatt-sph", transport)
+print(await dev.read_point("pv1_voltage"))  # 230.5
+```
+
+</TabItem>
+<TabItem value="c" label="C">
+
+```c
+md_doc_t doc;
+md_doc_init(&doc, flash_ptr, flash_len);        /* zero-copy view */
+
+md_dev_t dev;
+md_dev_init(&dev, &doc, MD_STR("growatt-sph"), &transport);
+
+md_value_t v;
+md_dev_read(&dev, MD_STR("pv1_voltage"), &v);   /* v.v.f64 == 230.5 */
+```
+
+</TabItem>
+</Tabs>
+
+The runtime read the raw register `2305`, applied the point's `scale` of
+`1/10`, and gave you `230.5`. You never wrote the offset `3` or the divisor
+`10` in your code — they live in the document.
+
+## Next steps
+
+- Query by meaning instead of address with [measurands](./concepts/measurands.mdx).
+- Understand exactly what the document can express in the [concept pages](./index.mdx).
+- Browse ready-made device definitions in the [device registry](https://github.com/ModDefOrg/devices).
+- Reach for the full [API reference](/sdk/) for your language.

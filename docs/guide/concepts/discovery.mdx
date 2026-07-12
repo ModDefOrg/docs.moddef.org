@@ -1,0 +1,53 @@
+---
+title: SunSpec discovery
+sidebar_position: 6
+---
+
+# SunSpec discovery
+
+Most register maps are static: a point lives at a fixed offset. SunSpec devices
+are different — their models are laid out as a **chain** whose position varies
+by device, so the address of a point is discovered at runtime.
+
+## The model chain
+
+A SunSpec device begins with the marker `"SunS"` at one of a few well-known
+anchor registers (commonly 40000 or 50000). After the marker comes a chain of
+models, each a `(model_id, length)` header followed by its data, terminated by
+`0xFFFF`.
+
+To find model 103 (a three-phase inverter), a runtime probes the anchors for
+`"SunS"`, then walks header to header — `offset += 2 + length` — until it
+matches `103`.
+
+## Declaring discovery
+
+A block marks itself discovered instead of giving fixed offsets:
+
+```yaml
+blocks:
+  - block_id: inverter
+    space: HOLDING_REGISTER
+    discovery:
+      kind: SUNSPEC
+      anchor_candidates: [0, 40000, 50000]
+      model_id: 103
+    points:
+      - point_id: ac_power
+        storage_type: S16
+        value_type: { primitive: DECIMAL }
+        mapping: { model_relative_offset: 14 }
+        transform: { scale_ref: { point_id: ac_power_sf, mode: POW10 } }
+```
+
+Points inside use `model_relative_offset` — an offset relative to the model's
+**ID register** (offset 0 is the model id, 1 is the length, data begins at 2).
+This ID-relative convention is identical across every ModDef runtime.
+
+## Caching
+
+Discovery costs a few reads. The runtime resolves each discovered block's base
+address **once** and caches it, so subsequent reads of any point in that block
+go straight to the register — no re-probing the anchor. The
+[SunSpec scale factors](./transforms.mdx#register-referenced-scale-factors-sunspec)
+those points reference are read live per decode.

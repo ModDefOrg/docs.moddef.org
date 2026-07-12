@@ -1,0 +1,77 @@
+---
+title: Types & storage
+sidebar_position: 2
+---
+
+# Types & storage
+
+A point separates **how the value is stored on the wire** from **what it means
+logically**. `storage_type` is the physical layout; `value_type` is the
+interpretation.
+
+## Storage types
+
+Modbus registers are 16-bit. ModDef storage types describe how one or more
+registers combine into a raw value:
+
+- Integers: `U16` `S16` `U24` `U32` `S32` `U48` `S48` `U64` `S64`
+- IEEE-754 floats: `IEEE754_F32` `IEEE754_F64`
+- Text and bytes: `STRING_ASCII` `STRING_UTF8` `BYTES_RAW`
+- Packed decimal: `BCD`
+- Multi-register composite: `COMPOSED` (mantissa × base^exponent)
+
+The register width follows from the storage type unless the mapping overrides
+it with `length_words`.
+
+## Byte and word order
+
+Multi-register values need two orderings, both defaulting to big-endian:
+
+- **`byte_order`** — byte order within a single 16-bit word (`BIG_ENDIAN` /
+  `LITTLE_ENDIAN`).
+- **`word_order`** — order of the words themselves for values wider than one
+  register (`WORD_BIG_ENDIAN` / `WORD_LITTLE_ENDIAN`).
+
+```yaml
+# 32-bit value, high word first, big-endian bytes (the common case)
+mapping: { space: HOLDING_REGISTER, offset: 100, length_words: 2,
+           byte_order: BIG_ENDIAN, word_order: WORD_BIG_ENDIAN }
+```
+
+## Value types
+
+`value_type` is a tagged choice:
+
+- `{ primitive: ... }` — `BOOL`, `INT32/64`, `UINT32/64`, `FLOAT32/64`,
+  `DECIMAL`, `STRING`, `BYTES`, `DATETIME`, `FLAGS`.
+- `{ enum_ref: { type_id } }` — a named enum defined in the document.
+- `{ struct_ref: ... }` / `{ array: ... }` — composite logical types.
+- `{ flags: { bits } }` — an independent bit set (§13.2).
+
+`DECIMAL` is the workhorse: an integer register scaled by a
+[transform](./transforms.mdx) into an engineering value. The decoded surface is
+a `double`/`number`/`float` in every runtime, with an exact-integer escape
+hatch (`decode_raw`) for billing counters that must not lose precision.
+
+## Sub-register fields
+
+A single register can pack several values — for example a time slot with the
+hour in the high byte and the minute in the low byte. **Register fields** name
+each bit range so you get a struct instead of a raw number:
+
+```yaml
+fields:
+  - { field_id: hour,   bit_offset: 8, bit_length: 8 }
+  - { field_id: minute, bit_offset: 0, bit_length: 8 }
+```
+
+## Unavailable values
+
+Devices signal "no data" with sentinel raw values (e.g. `0xFFFF` on a `U16`,
+`0x8000` on an `S16`). Declare them with `na_values` and the runtime returns an
+explicit *unavailable* result instead of a bogus number:
+
+```yaml
+na_values:
+  - { raw: 65535, meaning: not_implemented }
+```
