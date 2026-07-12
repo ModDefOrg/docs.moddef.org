@@ -104,23 +104,14 @@ DOXY
 
 build_cpp() {
   command -v doxygen >/dev/null || { warn "cpp: doxygen not found"; return; }
-  [ -d "$root/moddef-cpp" ] || { warn "cpp: ../moddef-cpp missing"; return; }
+  [ -f "$root/moddef-cpp/Doxyfile" ] || { warn "cpp: ../moddef-cpp/Doxyfile missing"; return; }
   log "C++ (Doxygen)"
   rm -rf "$sdk/cpp"
   mkdir -p "$sdk/cpp"
-  ( cd "$root/moddef-cpp" && doxygen - >/dev/null <<DOXY
-PROJECT_NAME    = "moddef-cpp"
-INPUT           = include/moddef
-FILE_PATTERNS   = *.hpp
-RECURSIVE       = YES
-GENERATE_LATEX  = NO
-GENERATE_HTML   = YES
-HTML_OUTPUT     = $sdk/cpp
-QUIET           = YES
-JAVADOC_AUTOBRIEF = YES
-BUILTIN_STL_SUPPORT = YES
-DOXY
-  ) || { warn "cpp: doxygen failed"; return; }
+  # Use the repo's committed Doxyfile; override only the output location
+  # (later assignments win when config is piped to `doxygen -`).
+  ( cd "$root/moddef-cpp" && { cat Doxyfile; printf 'OUTPUT_DIRECTORY=\nHTML_OUTPUT=%s\n' "$sdk/cpp"; } | doxygen - >/dev/null ) ||
+    { warn "cpp: doxygen failed"; return; }
 }
 
 mkdir -p "$sdk"
