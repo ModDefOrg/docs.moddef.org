@@ -347,45 +347,194 @@ function syncCli() {
 }
 
 // --- Device registry -------------------------------------------------------
+const CATEGORY_LABELS = {
+  'solar-inverter': 'Solar inverters',
+  'energy-meter': 'Energy meters',
+  'battery-storage': 'Battery storage',
+  'ev-charger': 'EV chargers',
+  hvac: 'HVAC',
+};
+
+function titleCaseSlug(slug) {
+  return slug
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+function transportLabel(t) {
+  return t.replace(/^MODBUS_/, 'Modbus ');
+}
+
+// Pull the device selector id and a representative readable point out of a
+// profile, for the per-device code examples.
+function profileSample(profileRel) {
+  const abs = join(devices, profileRel);
+  if (!existsSync(abs)) return {deviceId: null, point: null};
+  const prof = yaml.load(readFileSync(abs, 'utf8'));
+  const dev0 = (prof.devices || [])[0] || {};
+  let withMeasurand = null;
+  let firstReadable = null;
+  for (const blk of dev0.blocks || []) {
+    for (const p of blk.points || []) {
+      if ((p.access || 'READ') === 'WRITE_ONLY') continue;
+      if (!firstReadable) firstReadable = p.point_id;
+      if (p.measurand && !withMeasurand) withMeasurand = p.point_id;
+    }
+  }
+  return {deviceId: dev0.device_id || null, point: withMeasurand || firstReadable};
+}
+
+// measurand base_quantity -> catalog entry (name, unit, description).
+function measurandCatalog() {
+  const src = join(moddef, 'stdlib', 'measurands', '1.0.0', 'measurands.moddef.yaml');
+  if (!existsSync(src)) return new Map();
+  const doc = yaml.load(readFileSync(src, 'utf8'));
+  return new Map((doc.measurands || []).map((m) => [m.measurand_id, m]));
+}
+
+function deviceSlug(docId) {
+  return docId.replace(/\./g, '-');
+}
+
 function syncDevices() {
   const src = join(devices, 'registry.yaml');
   if (!existsSync(src)) return console.warn('devices registry not found, skipping');
   const reg = yaml.load(readFileSync(src, 'utf8'));
-  // Map registry.yaml entries to the shape DeviceBrowser expects (camelCase).
-  const entries = (reg.devices || []).map((d) => ({
-    vendor: d.vendor,
-    model: d.model,
-    category: d.category,
-    docId: d.doc_id,
-    profile: d.profile,
-    transports: d.transports || [],
-    points: d.points ?? 0,
-    status: d.status || 'unknown',
-    sourceUrl: d.source_url || '',
-    measurands: d.measurands || [],
-  }));
-  const out = [
-    '---',
-    'title: Device browser',
-    'sidebar_label: Device browser',
-    'slug: /devices',
-    '---',
-    '',
-    'import DeviceBrowser from \'@site/src/components/DeviceBrowser\';',
-    '',
-    '# Device browser',
-    '',
-    'Ready-to-use ModDef profiles for real hardware, curated in the',
-    `[\`devices\`](https://github.com/ModDefOrg/devices) registry (v${
-      reg.version ?? 1
-    }). Load one with any SDK and read points by name, no register map required.`,
-    '',
-    `export const DEVICES = ${JSON.stringify(entries)};`,
-    '',
-    '<DeviceBrowser devices={DEVICES} />',
-    '',
-  ].join('\n');
-  write('docs/devices/browser.mdx', out);
+  const catalog = measurandCatalog();
+  const repo = 'https://github.com/ModDefOrg/devices';
+
+  const entries = (reg.devices || []).map((d) => {
+    const slug = deviceSlug(d.doc_id);
+    return {
+      vendor: d.vendor,
+      model: d.model,
+      category: d.category,
+      docId: d.doc_id,
+      profile: d.profile,
+      transports: d.transports || [],
+      points: d.points ?? 0,
+      status: d.status || 'unknown',
+      sourceUrl: d.source_url || '',
+      measurands: d.measurands || [],
+      href: `/devices/${d.category}/${slug}`,
+    };
+  });
+
+  // Index page: the filterable browser.
+  write(
+    'docs/devices/index.mdx',
+    [
+      '---',
+      'title: Device browser',
+      'sidebar_label: All devices',
+      'sidebar_position: 0',
+      'slug: /devices',
+      '---',
+      '',
+      "import DeviceBrowser from '@site/src/components/DeviceBrowser';",
+      '',
+      '# Device browser',
+      '',
+      'Ready-to-use ModDef profiles for real hardware, curated in the',
+      `[\`devices\`](${repo}) registry (v${reg.version ?? 1}). Pick a device for its`,
+      'measurands and per-language usage, or browse by category in the sidebar.',
+      '',
+      `export const DEVICES = ${JSON.stringify(entries)};`,
+      '',
+      '<DeviceBrowser devices={DEVICES} />',
+      '',
+    ].join('\n'),
+  );
+
+  // One folder per category, with a label, plus a page per device.
+  const seenCategories = new Set();
+  for (const d of reg.devices || []) {
+    if (!seenCategories.has(d.category)) {
+      seenCategories.add(d.category);
+      write(
+        `docs/devices/${d.category}/_category_.json`,
+        JSON.stringify(
+          {
+            label: CATEGORY_LABELS[d.category] || titleCaseSlug(d.category),
+            collapsible: true,
+            collapsed: false,
+            link: {type: 'generated-index', slug: `/devices/${d.category}`},
+          },
+          null,
+          2,
+        ) + '\n',
+      );
+    }
+
+    const slug = deviceSlug(d.doc_id);
+    const {deviceId, point} = profileSample(d.profile);
+    const profileFile = d.profile.split('/').pop();
+    const profileUrl = `${repo}/blob/main/${d.profile}`;
+
+    // Measurand table joined against the catalog.
+    const rows = (d.measurands || []).map((q) => {
+      const m = catalog.get(q);
+      const name = m ? m.name : titleCaseSlug(q);
+      const unit = m ? (m.canonical_unit === '1' ? '`1` (ratio)' : `\`${m.canonical_unit}\``) : '';
+      const desc = m ? (m.description || '').replace(/\|/g, '\\|') : '';
+      return `| \`${q}\` | ${name} | ${unit} | ${desc} |`;
+    });
+
+    const meta = [
+      `**Status:** ${titleCaseSlug(d.status)}`,
+      `**Register points:** ${d.points}`,
+      `**Transports:** ${(d.transports || []).map(transportLabel).join(', ')}`,
+    ].join(' · ');
+
+    const usage =
+      deviceId && point
+        ? [
+            '## Usage',
+            '',
+            'Load the profile, bind a transport, and read a point by name. The runtime',
+            'applies the offset, scaling, byte order, and sentinels from the definition.',
+            '',
+            "import DeviceUsage from '@site/src/components/DeviceUsage';",
+            '',
+            `<DeviceUsage profile="${profileFile}" deviceId="${deviceId}" point="${point}" />`,
+            '',
+          ]
+        : [];
+
+    const body = [
+      '---',
+      `title: ${d.vendor} ${d.model}`,
+      `sidebar_label: ${d.model}`,
+      `slug: /devices/${d.category}/${slug}`,
+      '---',
+      '',
+      `# ${d.vendor} ${d.model}`,
+      '',
+      meta,
+      '',
+      `A curated ModDef profile for the ${d.vendor} ${d.model}. Import it as`,
+      `\`${d.doc_id}\` or load the [\`.moddef.yaml\`](${profileUrl}) directly.`,
+      '',
+      ...usage,
+      '## Measurands',
+      '',
+      `The ${(d.measurands || []).length} semantic quantities this device reports, each`,
+      'linked to the [measurand catalog](/stdlib/measurands). Query a device by',
+      'measurand instead of a raw point when you want portable code.',
+      '',
+      '| Base quantity | Name | Unit | Description |',
+      '| --- | --- | --- | --- |',
+      ...rows,
+      '',
+      '## Source',
+      '',
+      `- Profile: [\`${d.profile}\`](${profileUrl})`,
+      ...(d.source_url ? [`- Register map: [vendor documentation](${d.source_url})`] : []),
+      '',
+    ].join('\n');
+    write(`docs/devices/${d.category}/${slug}.mdx`, body);
+  }
 }
 
 syncSpec();

@@ -15,6 +15,8 @@ export type DeviceEntry = {
   status: string;
   sourceUrl: string;
   measurands: string[];
+  // Internal route to this device's own page.
+  href: string;
 };
 
 const REPO = 'https://github.com/ModDefOrg/devices';
@@ -58,13 +60,14 @@ function statusLabel(s: string): string {
 }
 
 function DeviceCard({device}: {device: DeviceEntry}): ReactNode {
-  const profileUrl = `${REPO}/blob/main/${device.profile}`;
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
         <div>
           <div className={styles.vendor}>{device.vendor}</div>
-          <div className={styles.model}>{device.model}</div>
+          <Link className={styles.model} to={device.href}>
+            {device.model}
+          </Link>
         </div>
         <span className={`${styles.status} ${STATUS_CLASS[device.status] ?? ''}`}>
           {statusLabel(device.status)}
@@ -81,22 +84,9 @@ function DeviceCard({device}: {device: DeviceEntry}): ReactNode {
         <span className={styles.badge}>{device.measurands.length} measurands</span>
       </div>
 
-      {device.measurands.length > 0 && (
-        <details className={styles.measurands}>
-          <summary>Measurands</summary>
-          <div className={styles.measurandList}>
-            {device.measurands.map((m) => (
-              <code key={m} className={styles.measurand}>
-                {m}
-              </code>
-            ))}
-          </div>
-        </details>
-      )}
-
       <div className={styles.cardFoot}>
-        <Link className={styles.link} to={profileUrl}>
-          Profile
+        <Link className={styles.link} to={device.href}>
+          View device
         </Link>
         {device.sourceUrl && (
           <Link className={styles.link} to={device.sourceUrl}>
@@ -109,7 +99,6 @@ function DeviceCard({device}: {device: DeviceEntry}): ReactNode {
 }
 
 export default function DeviceBrowser({devices}: {devices: DeviceEntry[]}): ReactNode {
-  const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [transport, setTransport] = useState('all');
 
@@ -123,15 +112,12 @@ export default function DeviceBrowser({devices}: {devices: DeviceEntry[]}): Reac
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return devices.filter((d) => {
       if (category !== 'all' && d.category !== category) return false;
       if (transport !== 'all' && !d.transports.includes(transport)) return false;
-      if (!q) return true;
-      const hay = `${d.vendor} ${d.model} ${d.measurands.join(' ')}`.toLowerCase();
-      return hay.includes(q);
+      return true;
     });
-  }, [devices, query, category, transport]);
+  }, [devices, category, transport]);
 
   // Group the filtered devices by category, preserving the sorted category order.
   const grouped = useMemo(() => {
@@ -159,14 +145,6 @@ export default function DeviceBrowser({devices}: {devices: DeviceEntry[]}): Reac
       </p>
 
       <div className={styles.toolbar}>
-        <input
-          className={styles.search}
-          type="search"
-          placeholder="Search vendor, model, or measurand"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search devices"
-        />
         <div className={styles.filters}>
           <select
             className={styles.select}

@@ -12,17 +12,6 @@
   margin: 1.5rem 0 0.5rem;
 }
 
-.search {
-  flex: 1 1 16rem;
-  min-width: 12rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 0.5rem;
-  background: var(--ifm-background-color);
-  color: var(--ifm-font-color-base);
-  font-size: 0.95rem;
-}
-
 .filters {
   display: flex;
   gap: 0.5rem;
@@ -96,10 +85,16 @@
 }
 
 .model {
+  display: inline-block;
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--ifm-heading-color);
   line-height: 1.2;
+}
+
+.model:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
 }
 
 .status {
@@ -146,27 +141,6 @@
 
 .badgeTransport {
   font-family: var(--ifm-font-family-monospace);
-}
-
-.measurands {
-  font-size: 0.85rem;
-}
-
-.measurands > summary {
-  cursor: pointer;
-  color: var(--ifm-color-emphasis-700);
-}
-
-.measurandList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.5rem;
-}
-
-.measurand {
-  font-size: 0.72rem;
-  padding: 0.05rem 0.35rem;
 }
 
 .cardFoot {
