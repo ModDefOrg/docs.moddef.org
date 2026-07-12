@@ -55,6 +55,15 @@ there is no build system to adopt. Convert your `.moddef.yaml` to binary
 host-side and embed it (or load it from flash).
 
 </TabItem>
+<TabItem value="cpp" label="C++">
+
+```cmake
+# moddef-cpp wraps moddef-c (a submodule) — C++23.
+add_subdirectory(moddef-cpp)
+target_link_libraries(app PRIVATE moddef::cpp)
+```
+
+</TabItem>
 </Tabs>
 
 ## Read a point
@@ -116,6 +125,17 @@ md_dev_init(&dev, &doc, MD_STR("growatt-sph"), &transport);
 
 md_value_t v;
 md_dev_read(&dev, MD_STR("pv1_voltage"), &v);   /* v.v.f64 == 230.5 */
+```
+
+</TabItem>
+<TabItem value="cpp" label="C++">
+
+```cpp
+auto doc = moddef::Document::view(flash_bytes).value();   // zero-copy over flash
+auto dev = moddef::Device::open(doc, "growatt-sph", transport).value();
+
+if (auto v = dev->read("pv1_voltage"); v && v->as_f64())
+    printf("%.1f V\n", *v->as_f64());                     // 230.5
 ```
 
 </TabItem>

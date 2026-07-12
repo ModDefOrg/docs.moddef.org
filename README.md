@@ -20,8 +20,9 @@ same-origin under `/sdk/<lang>/`.
 | `/sdk/rust` | rustdoc |
 | `/sdk/python` | Sphinx |
 | `/sdk/c` | Doxygen |
+| `/sdk/cpp` | Doxygen |
 
-The insight: don't force one generator to document five languages. Each SDK's
+The insight: don't force one generator to document six languages. Each SDK's
 docs come from the tool its community expects (rustdoc, TypeDoc, Sphinx,
 Doxygen), dropped into `static/sdk/<lang>/` and linked with `pathname://` so
 they navigate as real pages, not iframes.

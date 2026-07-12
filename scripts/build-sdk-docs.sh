@@ -102,10 +102,32 @@ DOXY
   ) || { warn "c: doxygen failed"; return; }
 }
 
+build_cpp() {
+  command -v doxygen >/dev/null || { warn "cpp: doxygen not found"; return; }
+  [ -d "$root/moddef-cpp" ] || { warn "cpp: ../moddef-cpp missing"; return; }
+  log "C++ (Doxygen)"
+  rm -rf "$sdk/cpp"
+  mkdir -p "$sdk/cpp"
+  ( cd "$root/moddef-cpp" && doxygen - >/dev/null <<DOXY
+PROJECT_NAME    = "moddef-cpp"
+INPUT           = include/moddef
+FILE_PATTERNS   = *.hpp
+RECURSIVE       = YES
+GENERATE_LATEX  = NO
+GENERATE_HTML   = YES
+HTML_OUTPUT     = $sdk/cpp
+QUIET           = YES
+JAVADOC_AUTOBRIEF = YES
+BUILTIN_STL_SUPPORT = YES
+DOXY
+  ) || { warn "cpp: doxygen failed"; return; }
+}
+
 mkdir -p "$sdk"
 build_go
 build_rust
 build_typescript
 build_python
 build_c
+build_cpp
 log "SDK docs done"

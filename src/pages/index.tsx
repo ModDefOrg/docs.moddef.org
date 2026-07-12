@@ -36,6 +36,7 @@ const SDKS: {name: string; to: string; lang: string}[] = [
   {name: 'Rust', to: 'pathname:///sdk/rust/', lang: 'no_std'},
   {name: 'Python', to: 'pathname:///sdk/python/', lang: 'asyncio'},
   {name: 'C', to: 'pathname:///sdk/c/', lang: 'embedded'},
+  {name: 'C++', to: 'pathname:///sdk/cpp/', lang: 'C++23'},
 ];
 
 const SAMPLE = `# growatt-sph.moddef.yaml — one definition, every runtime
@@ -82,7 +83,7 @@ function SdkGrid() {
           Idiomatic in every language
         </Heading>
         <p className="text--center">
-          One schema, five implementations that share a conformance suite. Pick the SDK your
+          One schema, six implementations that share a conformance suite. Pick the SDK your
           stack already speaks.
         </p>
         <div className={clsx('row', styles.sdkRow)}>

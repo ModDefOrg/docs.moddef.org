@@ -97,6 +97,7 @@ const config: Config = {
             {label: 'Rust', to: 'pathname:///sdk/rust/'},
             {label: 'Python', to: 'pathname:///sdk/python/'},
             {label: 'C', to: 'pathname:///sdk/c/'},
+            {label: 'C++', to: 'pathname:///sdk/cpp/'},
           ],
         },
         {

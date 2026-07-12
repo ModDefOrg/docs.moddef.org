@@ -25,5 +25,8 @@ yarn-error.log*
 /docs/cli/reference.mdx
 
 # The real per-language API docs are generated into static/sdk/<lang>/ by the
-# coupled docs build and deployed, never committed. The committed
-# static/sdk/<lang>/index.html placeholders stand in until then.
+# coupled docs build and deployed, never committed — only the placeholder
+# index.html files are tracked. Ignoring the *contents* (not the dirs) lets the
+# index.html negation take effect.
+/static/sdk/*/*
+!/static/sdk/*/index.html
