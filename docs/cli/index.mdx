@@ -4,20 +4,109 @@ sidebar_position: 1
 slug: /cli/
 ---
 
-# Command-line tool
+# `moddef` command-line tool
 
-`moddef` is the reference command-line tool: convert between encodings, lint and
+`moddef` is the reference CLI (Go): convert between encodings, validate and
 inspect documents, build binary `.moddef` files, generate typed clients, and
 package reusable stdlib bundles.
 
-- **[Reference](/cli/reference)** — every subcommand, from the tool's own `--help`.
+- **[Linter rules](/cli/lint-rules)** — every `MDE***` / `MDW***` code `moddef lint` reports.
+- **[Full `--help` output](/cli/reference)** — the verbatim top-level help.
+
+## Install
 
 ```bash
-# convert, validate, and inspect a device definition
-moddef convert growatt-sph.moddef.yaml growatt-sph.moddef
+# Install the latest release with the Go toolchain:
+go install github.com/ModDefOrg/moddef/go/cmd/moddef@latest
+
+# …or build from a checkout:
+git clone https://github.com/ModDefOrg/moddef
+cd moddef && buf generate && go build -o moddef ./go/cmd/moddef
+```
+
+`go install` puts the binary in `$(go env GOPATH)/bin` — make sure that's on
+your `PATH`. Building from source needs [`buf`](https://buf.build) first, since
+the CLI imports generated Protobuf code.
+
+## Commands
+
+### `moddef convert <in> <out>`
+
+Convert a document between the three encodings — `.moddef.yaml`,
+`.moddef.json`, and binary `.moddef` — inferring formats from the file
+extensions. Lossless in every direction.
+
+```bash
+moddef convert growatt-sph.moddef.yaml growatt-sph.moddef       # YAML → binary
+moddef convert growatt-sph.moddef growatt-sph.moddef.json       # binary → JSON
+```
+
+### `moddef lint <file>`
+
+Validate a document against the [rule set](/cli/lint-rules). Exits non-zero on
+any error (`MDE***`); warnings (`MDW***`) are printed but don't fail.
+
+```bash
 moddef lint growatt-sph.moddef.yaml
+```
+
+### `moddef inspect <file>`
+
+Print a human-readable summary of a document — devices, blocks, points, and
+their mappings — for a quick look without opening the file.
+
+```bash
 moddef inspect growatt-sph.moddef.yaml
 ```
 
+### `moddef build <in> [out]`
+
+Build the canonical binary `.moddef` from a YAML/JSON source. Output defaults
+to `<in>.moddef`. The binary form is deterministic, so it's ideal for
+embedding in firmware or checking against a golden.
+
+```bash
+moddef build growatt-sph.moddef.yaml            # → growatt-sph.moddef
+```
+
+### `moddef fmt [--check] <file>`
+
+Rewrite a document in canonical form (stable field order, normalized
+whitespace). `--check` reports whether the file is already canonical without
+writing — handy in CI.
+
+```bash
+moddef fmt growatt-sph.moddef.yaml              # rewrite in place
+moddef fmt --check growatt-sph.moddef.yaml      # exit non-zero if not canonical
+```
+
+### `moddef gen --lang <lang> --package <p> --input <f> [--out <file>]`
+
+Generate a typed client or catalog from a document. See the language
+[SDKs](/sdk/) for the runtimes these clients build on.
+
+```bash
+moddef gen --lang go --package inverter \
+  --input growatt-sph.moddef.yaml --out inverter/client.go
+```
+
+### `moddef pack <dir> [--out <zip>]`
+
+Build a reusable package (e.g. an stdlib bundle) from a directory containing a
+package manifest — the mechanism behind `moddef:stdlib:*` imports.
+
+```bash
+moddef pack stdlib/measurands --out measurands-1.0.0.zip
+```
+
+### `moddef lock <file>`
+
+Resolve a document's imports and write a `moddef.lock` pinning each to a
+checksum, so builds are reproducible.
+
+```bash
+moddef lock growatt-sph.moddef.yaml             # → moddef.lock
+```
+
 The CLI ships with the [`moddef`](https://github.com/ModDefOrg/moddef)
-reference implementation (Go).
+reference implementation.

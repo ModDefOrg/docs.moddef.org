@@ -29,6 +29,28 @@ function syncSpec() {
   let body = readFileSync(src, 'utf8');
   // Drop the leading H1 — the frontmatter title supplies it.
   body = body.replace(/^#\s+.*\n/, '');
+
+  // §27 dumps the whole ~500-line protobuf schema inline. The canonical
+  // schema is the .proto files; replace the code block with a link so the
+  // rendered spec stays readable (heading + intro kept).
+  const protoBase = 'https://github.com/ModDefOrg/moddef/blob/main/proto/moddef/v1';
+  const schemaLink = [
+    'The canonical schema is the Protobuf definition in',
+    `[\`moddef/proto/moddef/v1\`](https://github.com/ModDefOrg/moddef/tree/main/proto/moddef/v1):`,
+    '',
+    `- [\`types.proto\`](${protoBase}/types.proto) — primitive/value types, enums, transports`,
+    `- [\`mapping.proto\`](${protoBase}/mapping.proto) — physical mapping, transforms, fields, strings, write semantics`,
+    `- [\`device.proto\`](${protoBase}/device.proto) — device profiles, register blocks, points, variants`,
+    `- [\`measurand.proto\`](${protoBase}/measurand.proto) — the measurand model and aliases`,
+    `- [\`document.proto\`](${protoBase}/document.proto) — the top-level document and imports`,
+    '',
+    'The full schema is omitted here to keep the rendered spec readable — the',
+    '`.proto` files above are the source of truth.',
+  ].join('\n');
+  body = body.replace(
+    /(## 27\. Protobuf Schema Draft\n[\s\S]*?\n)```[ ]*proto\b[\s\S]*?\n```/,
+    (_m, head) => head + '\n' + schemaLink,
+  );
   // `format: md` keeps the spec as CommonMark so its `{`, `<`, and `§`
   // content is not parsed as MDX/JSX.
   const front = [
@@ -90,6 +112,70 @@ function syncMeasurands() {
   write('docs/stdlib/measurands.mdx', out);
 }
 
+// --- Linter rules reference ------------------------------------------------
+function syncLintRules() {
+  const src = join(moddef, 'fixtures', 'manifest.yaml');
+  if (!existsSync(src)) {
+    console.warn('fixtures manifest not found, skipping lint rules:', src);
+    return;
+  }
+  const manifest = yaml.load(readFileSync(src, 'utf8'));
+  const invalid = manifest.invalid || [];
+
+  // Deduplicate by rule; the manifest lists one fixture per rule.
+  const byRule = new Map();
+  for (const e of invalid) {
+    if (!byRule.has(e.rule)) byRule.set(e.rule, e);
+  }
+  const all = [...byRule.values()];
+  const esc = (s) => (s || '').replace(/\|/g, '\\|');
+  const table = (entries) =>
+    [
+      '| Code | Description |',
+      '| --- | --- |',
+      ...entries.map((e) => `| \`${e.rule}\` | ${esc(e.description)} |`),
+    ].join('\n');
+
+  const errors = all.filter((e) => e.severity === 'error' && /^MDE/.test(e.rule));
+  const warnings = all.filter((e) => e.severity === 'warning' || /^MDW/.test(e.rule));
+  const parse = all.filter((e) => /^PARSE/.test(e.rule));
+
+  const out = [
+    '---',
+    'title: Linter rules',
+    'sidebar_label: Linter rules',
+    'slug: /cli/lint-rules',
+    '---',
+    '',
+    '# Linter rules',
+    '',
+    'Every rule `moddef lint` can report. Codes are stable identifiers:',
+    '',
+    '- **`MDE***`** — errors; a document that trips one is invalid (exit code 1).',
+    '- **`MDW***`** — warnings; advisory, the document still validates (exit code 0).',
+    '- **`PARSE_*`** — schema-level parse failures (unknown field, bad enum, malformed oneof).',
+    '',
+    'See [§28 Validation Rules](/spec/v0.4#28-validation-rules) for the normative',
+    'descriptions, and the [`moddef` CLI](/cli/reference) for running the linter.',
+    '',
+    `Generated from the [conformance fixtures](https://github.com/ModDefOrg/moddef/tree/main/fixtures). ${all.length} rules.`,
+    '',
+    '## Errors',
+    '',
+    table(errors),
+    '',
+    '## Warnings',
+    '',
+    table(warnings),
+    '',
+    '## Schema parse errors',
+    '',
+    table(parse),
+    '',
+  ].join('\n');
+  write('docs/cli/lint-rules.mdx', out);
+}
+
 // --- CLI reference ---------------------------------------------------------
 function syncCli() {
   let help;
@@ -116,12 +202,15 @@ function syncCli() {
   // hard build error under onBrokenLinks: throw).
   const out = [
     '---',
-    'title: CLI reference',
-    'sidebar_label: moddef CLI',
+    'title: Full --help output',
+    'sidebar_label: --help output',
     'slug: /cli/reference',
     '---',
     '',
-    '# `moddef` CLI',
+    '# `moddef` — full `--help`',
+    '',
+    'The verbatim top-level help. See the [command reference](/cli/) for each',
+    'subcommand with examples.',
     '',
     ...body,
     '',
@@ -131,4 +220,5 @@ function syncCli() {
 
 syncSpec();
 syncMeasurands();
+syncLintRules();
 syncCli();

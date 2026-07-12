@@ -5,6 +5,8 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import CodeBlock from '@theme/CodeBlock';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 import styles from './index.module.css';
 
@@ -58,7 +60,7 @@ function Pitch() {
               A ModDef document is a declarative map of a device&apos;s Modbus registers —
               storage types, byte order, scaling, sentinels, write constraints, and the
               semantic measurand each point reports. It is the same file whether you read it
-              from Go, TypeScript, Rust, Python, or C.
+              from Go, TypeScript, Rust, Python, C, or C++.
             </p>
             <p>
               No hand-written register offsets scattered across firmware. No re-deriving the
@@ -68,6 +70,95 @@ function Pitch() {
           </div>
           <div className="col col--6">
             <CodeBlock language="yaml">{SAMPLE}</CodeBlock>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const USAGE: {value: string; label: string; lang: string; code: string}[] = [
+  {
+    value: 'go',
+    label: 'Go',
+    lang: 'go',
+    code: `doc, _ := moddef.Load("growatt-sph.moddef.yaml")
+dev, _ := client.New(doc, "growatt-sph", transport)
+v, _ := dev.ReadPoint(ctx, "pv1_voltage")
+fmt.Println(v) // 230.5`,
+  },
+  {
+    value: 'ts',
+    label: 'TypeScript',
+    lang: 'ts',
+    code: `const doc = await loadDocument("growatt-sph.moddef.yaml");
+const dev = Device.create(doc, "growatt-sph", transport);
+console.log(await dev.readPoint("pv1_voltage")); // 230.5`,
+  },
+  {
+    value: 'rust',
+    label: 'Rust',
+    lang: 'rust',
+    code: `let doc = moddef_core::load("growatt-sph.moddef.yaml")?;
+let mut dev = Device::new(&doc, Some("growatt-sph"), transport)?;
+let v = dev.read_point("pv1_voltage").await?; // 230.5`,
+  },
+  {
+    value: 'python',
+    label: 'Python',
+    lang: 'python',
+    code: `doc = load("growatt-sph.moddef.yaml")
+dev = Device.create(doc, "growatt-sph", transport)
+print(await dev.read_point("pv1_voltage"))  # 230.5`,
+  },
+  {
+    value: 'c',
+    label: 'C',
+    lang: 'c',
+    code: `md_doc_t doc;
+md_doc_init(&doc, flash_ptr, flash_len);   /* zero-copy view */
+md_dev_t dev;
+md_dev_init(&dev, &doc, MD_STR("growatt-sph"), &transport);
+md_value_t v;
+md_dev_read(&dev, MD_STR("pv1_voltage"), &v); /* v.v.f64 == 230.5 */`,
+  },
+  {
+    value: 'cpp',
+    label: 'C++',
+    lang: 'cpp',
+    code: `auto doc = moddef::Document::view(flash_bytes).value();
+auto dev = moddef::Device::open(doc, "growatt-sph", transport).value();
+if (auto v = dev->read("pv1_voltage"); v && v->as_f64())
+    printf("%.1f V\\n", *v->as_f64()); // 230.5`,
+  },
+];
+
+function Usage() {
+  return (
+    <section className={clsx(styles.section, styles.sectionAlt)}>
+      <div className="container">
+        <div className="row">
+          <div className="col col--5">
+            <Heading as="h2">Use it from your stack</Heading>
+            <p>
+              Load the definition, bind a transport, and read a point by name. The runtime
+              applies the offset, scaling, byte order, and sentinels from the document — you
+              never repeat them in code. The same call returns <code>230.5</code> in every
+              language.
+            </p>
+            <p>
+              Or query by meaning with a measurand — &ldquo;grid frequency&rdquo;,
+              &ldquo;L1-N voltage&rdquo; — and let the runtime find the point.
+            </p>
+          </div>
+          <div className="col col--7">
+            <Tabs groupId="lang">
+              {USAGE.map((u) => (
+                <TabItem key={u.value} value={u.value} label={u.label}>
+                  <CodeBlock language={u.lang}>{u.code}</CodeBlock>
+                </TabItem>
+              ))}
+            </Tabs>
           </div>
         </div>
       </div>
@@ -110,6 +201,7 @@ export default function Home(): ReactNode {
       <HomepageHeader />
       <main>
         <Pitch />
+        <Usage />
         <SdkGrid />
       </main>
     </Layout>
