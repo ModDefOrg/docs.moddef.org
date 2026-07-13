@@ -5,7 +5,7 @@
 // (npm run sync). Outputs are committed so the site builds anywhere; CI
 // re-runs this and could drift-check. Single source of truth stays upstream.
 import {execFileSync} from 'node:child_process';
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import yaml from 'js-yaml';
@@ -397,6 +397,13 @@ function deviceSlug(docId) {
   return docId.replace(/\./g, '-');
 }
 
+// The vendor folder slug is the doc_id namespace (the part before the first
+// dot), e.g. `carlogavazzi.em24` -> `carlogavazzi`. This groups every device
+// from one vendor under a stable, collision-free path.
+function vendorSlug(docId) {
+  return docId.split('.')[0];
+}
+
 function syncDevices() {
   const src = join(devices, 'registry.yaml');
   if (!existsSync(src)) return console.warn('devices registry not found, skipping');
@@ -447,8 +454,16 @@ function syncDevices() {
     ].join('\n'),
   );
 
-  // One folder per category, with a label, plus a page per device.
+  // Regenerate the tree from scratch so removed devices (and the pre-vendor
+  // flat layout) don't leave orphaned pages that would collide on slug.
+  for (const c of new Set((reg.devices || []).map((d) => d.category))) {
+    rmSync(join(root, 'docs/devices', c), {recursive: true, force: true});
+  }
+
+  // Nested folders: category -> vendor -> device page. The category folder
+  // carries a generated index; each vendor folder is a collapsible group.
   const seenCategories = new Set();
+  const seenVendors = new Set();
   for (const d of reg.devices || []) {
     if (!seenCategories.has(d.category)) {
       seenCategories.add(d.category);
@@ -460,6 +475,24 @@ function syncDevices() {
             collapsible: true,
             collapsed: false,
             link: {type: 'generated-index', slug: `/devices/${d.category}`},
+          },
+          null,
+          2,
+        ) + '\n',
+      );
+    }
+
+    const vendor = vendorSlug(d.doc_id);
+    const vendorKey = `${d.category}/${vendor}`;
+    if (!seenVendors.has(vendorKey)) {
+      seenVendors.add(vendorKey);
+      write(
+        `docs/devices/${d.category}/${vendor}/_category_.json`,
+        JSON.stringify(
+          {
+            label: d.vendor,
+            collapsible: true,
+            collapsed: false,
           },
           null,
           2,
@@ -533,7 +566,7 @@ function syncDevices() {
       ...(d.source_url ? [`- Register map: [vendor documentation](${d.source_url})`] : []),
       '',
     ].join('\n');
-    write(`docs/devices/${d.category}/${slug}.mdx`, body);
+    write(`docs/devices/${d.category}/${vendor}/${slug}.mdx`, body);
   }
 }
 
