@@ -11,6 +11,7 @@ import {
   type Transport,
 } from '@moddef/core';
 import {WebSerialTransport, webSerialAvailable} from '@site/src/lib/webSerialModbus';
+import {WebSocketTcpTransport} from '@site/src/lib/webSocketTcp';
 import {WsTransport} from '@site/src/lib/wsTransport';
 import styles from './styles.module.css';
 
@@ -26,7 +27,7 @@ type ManifestEntry = {
   href: string;
 };
 
-type Mode = 'serial' | 'ws';
+type Mode = 'serial' | 'tcp' | 'ws';
 
 // A readable point plus its owning block, for grouped display.
 type Row = {id: string; name: string; unit: string; blockId: string; blockName: string};
@@ -63,6 +64,7 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
   const [mode, setMode] = useState<Mode>('serial');
   const [baudRate, setBaudRate] = useState(9600);
   const [parity, setParity] = useState<'none' | 'even' | 'odd'>('none');
+  const [tcpUrl, setTcpUrl] = useState('ws://localhost:8502');
   const [wsUrl, setWsUrl] = useState('ws://localhost:8502');
   const [unitId, setUnitId] = useState(1);
   const [intervalMs, setIntervalMs] = useState(1000);
@@ -96,9 +98,9 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
 
   const selected = useMemo(() => devices.find((d) => d.docId === docId), [devices, docId]);
 
-  // If the chosen device is TCP-only, default to the WS bridge.
+  // If the chosen device is TCP-only, default to Modbus TCP.
   useEffect(() => {
-    if (selected && !selected.rtuCapable && mode === 'serial') setMode('ws');
+    if (selected && !selected.rtuCapable && mode === 'serial') setMode('tcp');
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopPolling = useCallback(() => {
@@ -168,7 +170,9 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
       const transport =
         mode === 'serial'
           ? await WebSerialTransport.open({baudRate, parity, unitId})
-          : await WsTransport.connect(wsUrl);
+          : mode === 'tcp'
+            ? await WebSocketTcpTransport.connect(tcpUrl, {unitId})
+            : await WsTransport.connect(wsUrl);
       transportRef.current = transport as Transport & {close: () => void};
 
       const text = await fetch(`${profilesBase}${selected.docId}.moddef.yaml`).then((r) => {
@@ -213,7 +217,7 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
       setError(e instanceof Error ? e.message : String(e));
       setStatus('idle');
     }
-  }, [selected, mode, baudRate, parity, unitId, wsUrl, profilesBase, disconnect]);
+  }, [selected, mode, baudRate, parity, unitId, tcpUrl, wsUrl, profilesBase, disconnect]);
 
   const doWrite = useCallback(
     async (row: Row, raw: string) => {
@@ -280,6 +284,15 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
             <label className={styles.radio}>
               <input
                 type="radio"
+                checked={mode === 'tcp'}
+                disabled={connected}
+                onChange={() => setMode('tcp')}
+              />{' '}
+              Modbus TCP
+            </label>
+            <label className={styles.radio}>
+              <input
+                type="radio"
                 checked={mode === 'ws'}
                 disabled={connected}
                 onChange={() => setMode('ws')}
@@ -318,6 +331,16 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
               </select>
             </div>
           </>
+        ) : mode === 'tcp' ? (
+          <div className={`${styles.field} ${styles.fieldWide}`}>
+            <label className={styles.label}>Proxy URL</label>
+            <input
+              className={styles.input}
+              value={tcpUrl}
+              disabled={connected}
+              onChange={(e) => setTcpUrl(e.target.value)}
+            />
+          </div>
         ) : (
           <div className={`${styles.field} ${styles.fieldWide}`}>
             <label className={styles.label}>Bridge URL</label>
@@ -372,11 +395,28 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
 
       {mode === 'serial' && !serialSupported && (
         <p className={styles.notice}>
-          Web Serial needs a Chromium browser (Chrome or Edge). For Modbus TCP devices, run the{' '}
+          Web Serial needs a Chromium browser (Chrome or Edge). For a networked device, switch the
+          transport to <strong>Modbus TCP</strong> or <strong>WS bridge</strong>.
+        </p>
+      )}
+
+      {mode === 'tcp' && !connected && (
+        <p className={styles.notice}>
+          Browsers can&apos;t open raw TCP, so point a transparent WebSocket&#8202;&#8594;&#8202;TCP proxy
+          at the device and connect to it above. With{' '}
+          <a href="https://github.com/novnc/websockify">websockify</a>:{' '}
+          <code>websockify 8502 &lt;device-ip&gt;:502</code>, then use{' '}
+          <code>ws://localhost:8502</code>.
+        </p>
+      )}
+
+      {mode === 'ws' && !connected && (
+        <p className={styles.notice}>
+          Runs Modbus on a small local relay that speaks the moddef JSON protocol — see the{' '}
           <a href="https://github.com/ModDefOrg/moddef-ts/tree/main/examples/browser-ws-bridge">
-            WebSocket bridge
+            browser-ws-bridge example
           </a>{' '}
-          and switch the transport to <strong>WS bridge</strong>.
+          (<code>npx tsx bridge.ts --tcp &lt;device-ip&gt;</code>).
         </p>
       )}
 
@@ -386,7 +426,8 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
         <div className={styles.statusBar}>
           <span className={styles.live}>● live</span>
           <span>
-            {rows.length} points · unit {unitId} · {mode === 'serial' ? `${baudRate} ${parity}` : wsUrl}
+            {rows.length} points · unit {unitId} ·{' '}
+            {mode === 'serial' ? `${baudRate} ${parity}` : mode === 'tcp' ? tcpUrl : wsUrl}
           </span>
           {updatedAt && (
             <span className={styles.muted}>updated {new Date(updatedAt).toLocaleTimeString()}</span>

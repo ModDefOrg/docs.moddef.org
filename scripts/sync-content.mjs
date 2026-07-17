@@ -577,7 +577,7 @@ function syncDevices() {
       `A curated ModDef profile for the ${d.vendor} ${d.model}. Import it as`,
       `\`${d.doc_id}\` or load the [\`.moddef.yaml\`](${profileUrl}) directly.`,
       '',
-      `Connect to one over ${(d.transports || []).includes('MODBUS_RTU') ? 'Web Serial' : 'a Modbus bridge'} and`,
+      `Connect to one over ${(d.transports || []).includes('MODBUS_RTU') ? 'Web Serial' : 'Modbus TCP'} and`,
       `watch its values live in the [device dashboard](/tools/live-dashboard?device=${d.doc_id}).`,
       '',
       ...usage,
