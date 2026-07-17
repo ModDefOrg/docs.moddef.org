@@ -64,6 +64,10 @@ jobs:
           python -m pip install --quiet sphinx furo
           pip install -e moddef-py
 
+      - name: Build @moddef/core (browser runtime for the live dashboard)
+        working-directory: moddef-ts
+        run: npm ci && npm run -w @moddef/core build
+
       - name: Install site deps
         working-directory: docs.moddef.org
         run: npm ci

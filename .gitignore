@@ -29,6 +29,9 @@ yarn-error.log*
 /docs/cli/lint-rules.mdx
 /docs/devices/
 
+# Device profiles copied from ../devices for the browser-side live dashboard.
+/static/profiles/
+
 # The real per-language API docs are generated into static/sdk/<lang>/ by the
 # coupled docs build and deployed, never committed — only the placeholder
 # index.html files are tracked. Ignoring the *contents* (not the dirs) lets the

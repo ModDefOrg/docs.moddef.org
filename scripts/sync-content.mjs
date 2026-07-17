@@ -413,6 +413,13 @@ function syncDevices() {
 
   const entries = (reg.devices || []).map((d) => {
     const slug = deviceSlug(d.doc_id);
+    // Ship the profile itself so the browser-side live dashboard can parse it
+    // (only registry metadata was client-side before). Static assets under
+    // static/ are gitignored and regenerated on build, like the other outputs.
+    const profileSrc = join(devices, d.profile);
+    if (existsSync(profileSrc)) {
+      write(`static/profiles/${d.doc_id}.moddef.yaml`, readFileSync(profileSrc, 'utf8'));
+    }
     return {
       vendor: d.vendor,
       model: d.model,
@@ -420,6 +427,8 @@ function syncDevices() {
       docId: d.doc_id,
       profile: d.profile,
       transports: d.transports || [],
+      // Web Serial can only speak Modbus RTU; TCP-only devices need the bridge.
+      rtuCapable: (d.transports || []).includes('MODBUS_RTU'),
       points: d.points ?? 0,
       status: d.status || 'unknown',
       sourceUrl: d.source_url || '',
@@ -427,6 +436,25 @@ function syncDevices() {
       href: `/devices/${d.category}/${slug}`,
     };
   });
+
+  // Manifest for the live dashboard tool page (a standalone React page that
+  // can't import the MDX-embedded DEVICES array).
+  write(
+    'static/profiles/manifest.json',
+    JSON.stringify(
+      entries.map((e) => ({
+        docId: e.docId,
+        vendor: e.vendor,
+        model: e.model,
+        category: e.category,
+        transports: e.transports,
+        rtuCapable: e.rtuCapable,
+        points: e.points,
+        status: e.status,
+        href: e.href,
+      })),
+    ),
+  );
 
   // Index page: the filterable browser.
   write(
@@ -548,6 +576,9 @@ function syncDevices() {
       '',
       `A curated ModDef profile for the ${d.vendor} ${d.model}. Import it as`,
       `\`${d.doc_id}\` or load the [\`.moddef.yaml\`](${profileUrl}) directly.`,
+      '',
+      `Connect to one over ${(d.transports || []).includes('MODBUS_RTU') ? 'Web Serial' : 'a Modbus bridge'} and`,
+      `watch its values live in the [device dashboard](/tools/live-dashboard?device=${d.doc_id}).`,
       '',
       ...usage,
       '## Measurands',

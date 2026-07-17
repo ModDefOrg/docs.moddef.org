@@ -92,6 +92,7 @@ const config: Config = {
         {to: '/spec/', label: 'Spec', position: 'left'},
         {to: '/stdlib/measurands', label: 'Measurands', position: 'left'},
         {to: '/devices', label: 'Devices', position: 'left'},
+        {to: '/tools/live-dashboard', label: 'Live dashboard', position: 'left'},
         {to: '/cli/', label: 'CLI', position: 'left'},
         {to: '/sdk/', label: 'SDKs', position: 'left'},
         {href: GITHUB_ORG, label: 'GitHub', position: 'right'},
@@ -107,6 +108,7 @@ const config: Config = {
             {label: 'Specification', to: '/spec/'},
             {label: 'Measurand catalog', to: '/stdlib/measurands'},
             {label: 'Device browser', to: '/devices'},
+            {label: 'Live dashboard', to: '/tools/live-dashboard'},
           ],
         },
         {
