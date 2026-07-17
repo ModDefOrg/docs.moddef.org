@@ -18,7 +18,8 @@ export default function LiveDashboardPage(): ReactNode {
           Connect to a Modbus device straight from your browser and watch the values from its ModDef
           profile update live. Use <strong>Web Serial</strong> (Chrome/Edge) for Modbus RTU devices, or{' '}
           <strong>Modbus TCP</strong> through a WebSocket proxy for networked devices. Everything runs
-          locally — no data leaves your machine.
+          locally — no data leaves your machine. No hardware? Pick <strong>Demo</strong> to explore a
+          profile with synthetic live data.
         </p>
         <BrowserOnly>
           {() => {

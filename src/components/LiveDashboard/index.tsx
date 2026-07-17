@@ -10,6 +10,7 @@ import {
   type DecodedValue,
   type Transport,
 } from '@moddef/core';
+import {DemoTransport} from '@site/src/lib/demoTransport';
 import {WebSerialTransport, webSerialAvailable} from '@site/src/lib/webSerialModbus';
 import {WebSocketTcpTransport} from '@site/src/lib/webSocketTcp';
 import {WsTransport} from '@site/src/lib/wsTransport';
@@ -27,7 +28,7 @@ type ManifestEntry = {
   href: string;
 };
 
-type Mode = 'serial' | 'tcp' | 'ws';
+type Mode = 'demo' | 'serial' | 'tcp' | 'ws';
 
 // A readable point plus its owning block, for grouped display.
 type Row = {id: string; name: string; unit: string; blockId: string; blockName: string};
@@ -61,7 +62,7 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
   const [devices, setDevices] = useState<ManifestEntry[]>([]);
   const [docId, setDocId] = useState(initialDeviceId ?? '');
 
-  const [mode, setMode] = useState<Mode>('serial');
+  const [mode, setMode] = useState<Mode>('demo');
   const [baudRate, setBaudRate] = useState(9600);
   const [parity, setParity] = useState<'none' | 'even' | 'odd'>('none');
   const [tcpUrl, setTcpUrl] = useState('ws://localhost:8502');
@@ -168,11 +169,13 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
     setStatus('connecting');
     try {
       const transport =
-        mode === 'serial'
-          ? await WebSerialTransport.open({baudRate, parity, unitId})
-          : mode === 'tcp'
-            ? await WebSocketTcpTransport.connect(tcpUrl, {unitId})
-            : await WsTransport.connect(wsUrl);
+        mode === 'demo'
+          ? new DemoTransport()
+          : mode === 'serial'
+            ? await WebSerialTransport.open({baudRate, parity, unitId})
+            : mode === 'tcp'
+              ? await WebSocketTcpTransport.connect(tcpUrl, {unitId})
+              : await WsTransport.connect(wsUrl);
       transportRef.current = transport as Transport & {close: () => void};
 
       const text = await fetch(`${profilesBase}${selected.docId}.moddef.yaml`).then((r) => {
@@ -181,6 +184,8 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
       });
       const doc = parseDocument(text, 'yaml');
       const dev = Device.create(doc, undefined, transport);
+      // Demo mode fills a synthetic register image from the profile itself.
+      if (transport instanceof DemoTransport) transport.seed(dev);
       deviceRef.current = dev;
 
       const readable: Row[] = [];
@@ -275,6 +280,15 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
             <label className={styles.radio}>
               <input
                 type="radio"
+                checked={mode === 'demo'}
+                disabled={connected}
+                onChange={() => setMode('demo')}
+              />{' '}
+              Demo
+            </label>
+            <label className={styles.radio}>
+              <input
+                type="radio"
                 checked={mode === 'serial'}
                 disabled={connected}
                 onChange={() => setMode('serial')}
@@ -341,7 +355,7 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
               onChange={(e) => setTcpUrl(e.target.value)}
             />
           </div>
-        ) : (
+        ) : mode === 'ws' ? (
           <div className={`${styles.field} ${styles.fieldWide}`}>
             <label className={styles.label}>Bridge URL</label>
             <input
@@ -351,20 +365,22 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
               onChange={(e) => setWsUrl(e.target.value)}
             />
           </div>
-        )}
+        ) : null}
 
-        <div className={styles.field}>
-          <label className={styles.label}>Unit id</label>
-          <input
-            className={styles.input}
-            type="number"
-            min={0}
-            max={247}
-            value={unitId}
-            disabled={connected}
-            onChange={(e) => setUnitId(Number(e.target.value))}
-          />
-        </div>
+        {mode !== 'demo' && (
+          <div className={styles.field}>
+            <label className={styles.label}>Unit id</label>
+            <input
+              className={styles.input}
+              type="number"
+              min={0}
+              max={247}
+              value={unitId}
+              disabled={connected}
+              onChange={(e) => setUnitId(Number(e.target.value))}
+            />
+          </div>
+        )}
         <div className={styles.field}>
           <label className={styles.label}>Poll (ms)</label>
           <input
@@ -392,6 +408,14 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
           )}
         </div>
       </div>
+
+      {mode === 'demo' && !connected && (
+        <p className={styles.notice}>
+          Demo mode fills the dashboard with synthetic, live-updating values decoded straight from the
+          selected profile — no device, proxy, or Chromium browser needed. Great for exploring what a
+          profile exposes.
+        </p>
+      )}
 
       {mode === 'serial' && !serialSupported && (
         <p className={styles.notice}>
@@ -426,8 +450,12 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
         <div className={styles.statusBar}>
           <span className={styles.live}>● live</span>
           <span>
-            {rows.length} points · unit {unitId} ·{' '}
-            {mode === 'serial' ? `${baudRate} ${parity}` : mode === 'tcp' ? tcpUrl : wsUrl}
+            {rows.length} points ·{' '}
+            {mode === 'demo'
+              ? 'synthetic data'
+              : mode === 'serial'
+                ? `unit ${unitId} · ${baudRate} ${parity}`
+                : `unit ${unitId} · ${mode === 'tcp' ? tcpUrl : wsUrl}`}
           </span>
           {updatedAt && (
             <span className={styles.muted}>updated {new Date(updatedAt).toLocaleTimeString()}</span>
