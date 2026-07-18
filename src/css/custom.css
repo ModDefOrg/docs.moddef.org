@@ -48,6 +48,10 @@
   --ifm-link-color: var(--ifm-color-primary);
   --ifm-link-hover-color: var(--ifm-color-primary-lighter);
 
+  /* Bright, warm off-white body/heading text on dark. */
+  --ifm-font-color-base: #f2f2e6;
+  --ifm-heading-color: #f2f2e6;
+
   /* Lighter teal keeps secondary text legible on dark. */
   --ifm-color-emphasis-600: #8bacae;
   --ifm-color-emphasis-700: #a7c2c3;

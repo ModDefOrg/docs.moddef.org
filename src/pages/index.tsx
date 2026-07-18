@@ -20,7 +20,7 @@ function HomepageHeader() {
       <div className="container">
         <img
           className={styles.heroLogo}
-          src={useBaseUrl('/moddef-logo.svg')}
+          src={useBaseUrl('/moddef-logo-dark.svg')}
           alt="ModDef logo"
           width={128}
           height={128}

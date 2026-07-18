@@ -6,8 +6,8 @@
 .heroBanner {
   padding: 4rem 0 4rem;
   text-align: center;
-  /* Brand slate -> teal; lets the amber logo and CTA pop. */
-  background: linear-gradient(160deg, #2a4551, #517476);
+  /* Solid brand slate; lets the logo and amber CTA pop. */
+  background: #2a4551;
   color: #fff;
 }
 
