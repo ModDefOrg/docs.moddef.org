@@ -35,6 +35,25 @@ type Row = {id: string; name: string; unit: string; blockId: string; blockName: 
 
 const BAUD_RATES = [2400, 4800, 9600, 19200, 38400, 57600, 115200];
 
+// Category display labels, mirroring the docs sidebar / device browser.
+const CATEGORY_LABELS: Record<string, string> = {
+  'solar-inverter': 'Solar inverters',
+  'energy-meter': 'Energy meters',
+  'battery-storage': 'Battery storage',
+  'ev-charger': 'EV chargers',
+  hvac: 'HVAC',
+};
+
+function categoryLabel(slug: string): string {
+  return (
+    CATEGORY_LABELS[slug] ??
+    slug
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+  );
+}
+
 function formatValue(v: DecodedValue): string {
   if (isUnavailable(v)) return 'n/a';
   if (typeof v === 'number') {
@@ -90,12 +109,31 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
   useEffect(() => {
     fetch(manifestUrl)
       .then((r) => r.json())
-      .then((list: ManifestEntry[]) => {
-        setDevices(list);
-        if (!initialDeviceId && list.length) setDocId(list[0].docId);
-      })
+      .then((list: ManifestEntry[]) => setDevices(list))
       .catch(() => setError('Could not load the device list.'));
-  }, [manifestUrl, initialDeviceId]);
+  }, [manifestUrl]);
+
+  // Group by category and order like the docs sidebar: categories A→Z by label,
+  // devices A→Z by doc id (which sorts vendor-then-model within a category).
+  const deviceGroups = useMemo(() => {
+    const byCat = new Map<string, ManifestEntry[]>();
+    for (const d of devices) {
+      const list = byCat.get(d.category) ?? [];
+      list.push(d);
+      byCat.set(d.category, list);
+    }
+    return [...byCat.keys()]
+      .sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b)))
+      .map(
+        (c) =>
+          [categoryLabel(c), byCat.get(c)!.slice().sort((a, b) => a.docId.localeCompare(b.docId))] as const,
+      );
+  }, [devices]);
+
+  // Default the picker to the first device in sidebar order.
+  useEffect(() => {
+    if (!docId && deviceGroups.length) setDocId(deviceGroups[0][1][0].docId);
+  }, [deviceGroups, docId]);
 
   const selected = useMemo(() => devices.find((d) => d.docId === docId), [devices, docId]);
 
@@ -165,6 +203,11 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
 
   const connect = useCallback(async () => {
     if (!selected) return;
+    if (mode === 'serial' && !serialSupported) {
+      setError('Web Serial is not supported in this browser — use Chrome or Edge, or pick Demo or Modbus TCP.');
+      setStatus('idle');
+      return;
+    }
     setError(null);
     setStatus('connecting');
     try {
@@ -222,7 +265,7 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
       setError(e instanceof Error ? e.message : String(e));
       setStatus('idle');
     }
-  }, [selected, mode, baudRate, parity, unitId, tcpUrl, wsUrl, profilesBase, disconnect]);
+  }, [selected, mode, serialSupported, baudRate, parity, unitId, tcpUrl, wsUrl, profilesBase, disconnect]);
 
   const doWrite = useCallback(
     async (row: Row, raw: string) => {
@@ -266,10 +309,15 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
             value={docId}
             disabled={connected}
             onChange={(e) => setDocId(e.target.value)}>
-            {devices.map((d) => (
-              <option key={d.docId} value={d.docId}>
-                {d.vendor} {d.model} {d.rtuCapable ? '' : '(TCP only)'}
-              </option>
+            {deviceGroups.map(([label, list]) => (
+              <optgroup key={label} label={label}>
+                {list.map((d) => (
+                  <option key={d.docId} value={d.docId}>
+                    {d.vendor} {d.model}
+                    {d.rtuCapable ? '' : ' (TCP only)'}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -286,14 +334,16 @@ export default function LiveDashboard({initialDeviceId}: LiveDashboardProps): Re
               />{' '}
               Demo
             </label>
-            <label className={styles.radio}>
+            <label
+              className={styles.radio}
+              title={serialSupported ? undefined : 'Web Serial needs Chrome or Edge'}>
               <input
                 type="radio"
                 checked={mode === 'serial'}
-                disabled={connected}
+                disabled={connected || !serialSupported}
                 onChange={() => setMode('serial')}
               />{' '}
-              Web Serial
+              Web Serial{!serialSupported && <span className={styles.muted}> (needs Chrome/Edge)</span>}
             </label>
             <label className={styles.radio}>
               <input

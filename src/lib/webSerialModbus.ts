@@ -29,7 +29,13 @@ interface SerialLike {
 }
 
 export function webSerialAvailable(): boolean {
-  return typeof navigator !== 'undefined' && 'serial' in navigator;
+  // Check the actual object, not just `'serial' in navigator`: some engines
+  // expose the property while leaving it undefined (and Firefox/Safari omit it).
+  return (
+    typeof navigator !== 'undefined' &&
+    (navigator as {serial?: unknown}).serial != null &&
+    typeof (navigator as {serial?: {requestPort?: unknown}}).serial?.requestPort === 'function'
+  );
 }
 
 export interface WebSerialOptions {
