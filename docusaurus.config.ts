@@ -14,7 +14,7 @@ const GITHUB_ORG = 'https://github.com/ModDefOrg';
 const config: Config = {
   title: 'ModDef',
   tagline: 'Declarative Modbus device definitions: one schema, every language',
-  favicon: 'img/favicon.ico',
+  favicon: 'moddef-logo.png',
 
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
@@ -77,7 +77,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'moddef-logo.png',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -85,7 +85,8 @@ const config: Config = {
       title: 'ModDef',
       logo: {
         alt: 'ModDef',
-        src: 'img/logo.svg',
+        src: 'moddef-logo.svg',
+        srcDark: 'moddef-logo-dark.svg',
       },
       items: [
         {to: '/guide/getting-started', label: 'Guide', position: 'left'},

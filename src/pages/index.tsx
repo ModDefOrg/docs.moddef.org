@@ -3,6 +3,7 @@
 import type {ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
@@ -17,6 +18,13 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero', styles.heroBanner)}>
       <div className="container">
+        <img
+          className={styles.heroLogo}
+          src={useBaseUrl('/moddef-logo.svg')}
+          alt="ModDef logo"
+          width={128}
+          height={128}
+        />
         <Heading as="h1" className={styles.heroTitle}>
           {siteConfig.title}
         </Heading>

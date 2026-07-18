@@ -3,26 +3,60 @@
  * bundles Infima by default.
  */
 
-/* Industrial blue brand. */
+/* ModDef brand palette:
+ *   #2a4551 — main text (slate)
+ *   #517476 — secondary text (teal)
+ *   #dba856 — highlight / accent (amber)
+ */
 :root {
-  --ifm-color-primary: #1f6feb;
-  --ifm-color-primary-dark: #1a63d4;
-  --ifm-color-primary-darker: #185dc8;
-  --ifm-color-primary-darkest: #144ca5;
-  --ifm-color-primary-light: #3a80ee;
-  --ifm-color-primary-lighter: #4789ef;
-  --ifm-color-primary-lightest: #6da0f2;
+  /* Amber is the brand accent / highlight. */
+  --ifm-color-primary: #dba856;
+  --ifm-color-primary-dark: #d59a39;
+  --ifm-color-primary-darker: #cf9130;
+  --ifm-color-primary-darkest: #a3762b;
+  --ifm-color-primary-light: #e0b46b;
+  --ifm-color-primary-lighter: #e3bb79;
+  --ifm-color-primary-lightest: #ecd0a1;
+
+  /* Text colours. */
+  --ifm-font-color-base: #2a4551;
+  --ifm-heading-color: #2a4551;
+
+  /* Amber is too light for body-sized link text on white; use the darkest
+   * shade for links and keep amber for buttons/accents. */
+  --ifm-link-color: var(--ifm-color-primary-darkest);
+  --ifm-link-hover-color: #2a4551;
+
+  /* Secondary / muted text -> teal. */
+  --ifm-color-emphasis-600: #517476;
+  --ifm-color-emphasis-700: #517476;
+
   --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(219, 168, 86, 0.18);
 }
 
 [data-theme='dark'] {
-  --ifm-color-primary: #58a6ff;
-  --ifm-color-primary-dark: #3d97ff;
-  --ifm-color-primary-darker: #2f8fff;
-  --ifm-color-primary-darkest: #067aff;
-  --ifm-color-primary-light: #73b5ff;
-  --ifm-color-primary-lighter: #81bdff;
-  --ifm-color-primary-lightest: #aad4ff;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  /* Amber reads well on dark backgrounds, so use it directly. */
+  --ifm-color-primary: #dba856;
+  --ifm-color-primary-dark: #d59a39;
+  --ifm-color-primary-darker: #cf9130;
+  --ifm-color-primary-darkest: #a3762b;
+  --ifm-color-primary-light: #e0b46b;
+  --ifm-color-primary-lighter: #e3bb79;
+  --ifm-color-primary-lightest: #ecd0a1;
+
+  --ifm-link-color: var(--ifm-color-primary);
+  --ifm-link-hover-color: var(--ifm-color-primary-lighter);
+
+  /* Lighter teal keeps secondary text legible on dark. */
+  --ifm-color-emphasis-600: #8bacae;
+  --ifm-color-emphasis-700: #a7c2c3;
+
+  --docusaurus-highlighted-code-line-bg: rgba(219, 168, 86, 0.24);
+}
+
+/* The amber primary button needs dark text for contrast. */
+.button--primary {
+  --ifm-button-color: #2a4551;
+  color: #2a4551;
 }

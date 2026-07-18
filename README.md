@@ -60,6 +60,13 @@ API docs, syncs content, builds the site, and deploys to GitHub Pages
 doc-tool config lives in `scripts/build-sdk-docs.sh` for now; it can later move
 into each SDK repo's CI, publishing artifacts this site pulls at build time.
 
+## Credits
+
+The ModDef logo incorporates the "Files Stack" icon by Jadid Ahmed from the
+[Noun Project](https://thenounproject.com/icon/files-stack-8431553/), used under
+the [Creative Commons Attribution 3.0 (CC BY 3.0)](https://creativecommons.org/licenses/by/3.0/)
+license.
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
