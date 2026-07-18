@@ -1,4 +1,4 @@
-# Contributing to docs.moddef.org
+# Contributing to moddef.org
 
 Thanks for improving the documentation.
 

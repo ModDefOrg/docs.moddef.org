@@ -20,11 +20,11 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
-  url: 'https://docs.moddef.org',
+  url: 'https://moddef.org',
   baseUrl: '/',
 
   organizationName: 'ModDefOrg',
-  projectName: 'docs.moddef.org',
+  projectName: 'moddef.org',
 
   onBrokenLinks: 'throw',
   // The imported spec and generated SDK docs carry anchors we can't resolve
@@ -52,7 +52,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/', // docs are the site; the React homepage owns '/'
           sidebarPath: './sidebars.ts',
-          editUrl: `${GITHUB_ORG}/docs.moddef.org/tree/main/`,
+          editUrl: `${GITHUB_ORG}/moddef.org/tree/main/`,
         },
         blog: false,
         theme: {

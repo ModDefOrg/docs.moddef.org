@@ -1,4 +1,4 @@
-# docs.moddef.org
+# moddef.org
 
 The ModDef documentation site. [Docusaurus](https://docusaurus.io) renders the
 hand-written guide, spec, measurand catalog, and CLI reference, with each
@@ -34,7 +34,7 @@ the SDK repos, one directory up:
 
 ```
 ModDefOrg/
-  docs.moddef.org/   ← here
+  moddef.org/   ← here
   moddef/  moddef-ts/  moddef-rs/  moddef-py/  moddef-c/
 ```
 
@@ -56,7 +56,7 @@ regenerated.
 
 `.github/workflows/deploy.yml` checks out all sibling repos, builds every SDK's
 API docs, syncs content, builds the site, and deploys to GitHub Pages
-(`docs.moddef.org`, via `static/CNAME`). This is the **coupled** build: per-SDK
+(`moddef.org`, via `static/CNAME`). This is the **coupled** build: per-SDK
 doc-tool config lives in `scripts/build-sdk-docs.sh` for now; it can later move
 into each SDK repo's CI, publishing artifacts this site pulls at build time.
 
