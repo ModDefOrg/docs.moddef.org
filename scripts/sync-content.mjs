@@ -58,9 +58,9 @@ function syncSpec() {
   // content is not parsed as MDX/JSX.
   const front = [
     '---',
-    'title: Specification v0.4',
-    'sidebar_label: v0.4 (current)',
-    'slug: /spec/v0.4',
+    'title: Specification v0.5',
+    'sidebar_label: v0.5 (current)',
+    'slug: /spec/v0.5',
     'format: md',
     '---',
     '',
@@ -71,7 +71,7 @@ function syncSpec() {
     ':::',
     '',
   ].join('\n');
-  write('docs/spec/v0.4.md', front + body + '\n');
+  write('docs/spec/v0.5.md', front + body + '\n');
 }
 
 // --- Measurand catalog -----------------------------------------------------
@@ -283,7 +283,7 @@ function syncLintRules() {
     '- **`MDW***`**: warnings; advisory, the document still validates (exit code 0).',
     '- **`PARSE_*`**: schema-level parse failures (unknown field, bad enum, malformed oneof).',
     '',
-    'See [§28 Validation Rules](/spec/v0.4#28-validation-rules) for the normative',
+    'See [§28 Validation Rules](/spec/v0.5#28-validation-rules) for the normative',
     'descriptions, and the [`moddef` CLI](/cli/reference) for running the linter.',
     '',
     `Generated from the [conformance fixtures](https://github.com/ModDefOrg/moddef/tree/main/fixtures). ${all.length} rules.`,

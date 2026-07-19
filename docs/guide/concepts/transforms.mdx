@@ -59,10 +59,35 @@ selector_ref:
 
 ## Composed values
 
-`COMPOSED` storage reconstructs `mantissa × base^exponent` from two sub-windows
-of the same register span. A few meters use this form for wide-dynamic-range
-readings. It is read-only; the mantissa and exponent offsets are part of the
-mapping.
+`COMPOSED` storage reconstructs `mantissa × base^exponent` from two
+sub-mappings of the same register span. A few meters use this form for
+wide-dynamic-range readings. It is read-only; sub-mapping offsets are word
+offsets relative to the point's mapped window.
+
+Since v0.5 a sub-mapping can also carry a **bit window**
+(`bit_offset`/`bit_length`), for meters that embed the decade exponent in the
+high bits of the *same* word as the mantissa — Iskra's T5/T6 measurement types
+(signed 8-bit exponent in bits 31–24, 24-bit mantissa in bits 23–0) and the
+Eaton PXM "GENERAL FORMAT" (8-bit exponent + 56-bit mantissa). The vendor
+example `FD01 E240` decodes as `123456 × 10⁻³ = 123.456`:
+
+```yaml
+storage_type: COMPOSED
+mapping:
+  offset: 140
+  length_words: 2
+  composed:
+    kind: MANTISSA_EXPONENT
+    base: 10
+    mantissa: { offset: 0, length_words: 2, storage_type: S32, bit_offset: 0,  bit_length: 24 }
+    exponent: { offset: 0, length_words: 2, storage_type: S16, bit_offset: 24, bit_length: 8 }
+```
+
+The sub-mapping's `storage_type` supplies signedness; a bit-windowed value
+sign-extends from `bit_length`. Composed points may also overlap *each other*
+— their parent mappings are read windows, which is how interleaved
+mantissa/exponent register pools (the Iskra non-reset energy totals) are
+modeled.
 
 All of these are defined once in the document and applied identically by every
 runtime, and the conformance suite pins them to the same numeric results.
