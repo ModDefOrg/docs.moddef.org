@@ -43,6 +43,7 @@ function syncSpec() {
     '',
     `- [\`types.proto\`](${protoBase}/types.proto): primitive and value types, enums, transports`,
     `- [\`mapping.proto\`](${protoBase}/mapping.proto): physical mapping, transforms, fields, strings, write semantics`,
+    `- [\`command.proto\`](${protoBase}/command.proto): multi-step command procedures (§11.7)`,
     `- [\`device.proto\`](${protoBase}/device.proto): device profiles, register blocks, points, variants`,
     `- [\`measurand.proto\`](${protoBase}/measurand.proto): the measurand model and aliases`,
     `- [\`document.proto\`](${protoBase}/document.proto): the top-level document and imports`,
