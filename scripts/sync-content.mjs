@@ -367,11 +367,23 @@ function transportLabel(t) {
   return t.replace(/^MODBUS_/, 'Modbus ');
 }
 
-// Pull the device selector id and a representative readable point out of a
-// profile, for the per-device code examples.
+// Short label for a ValueType object ({primitive: X} / {enum_ref: {type_id}} /
+// {struct_ref: {type_id}} / {array: {...}} / {flags: {...}}), spec §8.
+function valueTypeLabel(vt) {
+  if (!vt) return '';
+  if (vt.primitive) return vt.primitive;
+  if (vt.enum_ref) return `enum \`${vt.enum_ref.type_id}\``;
+  if (vt.struct_ref) return `struct \`${vt.struct_ref.type_id}\``;
+  if (vt.array) return `array of ${valueTypeLabel(vt.array.element_type) || '?'}`;
+  if (vt.flags) return 'flags';
+  return '';
+}
+
+// Pull the device selector id, a representative readable point, and the
+// device's commands (spec §11.7) out of a profile, for the per-device page.
 function profileSample(profileRel) {
   const abs = join(devices, profileRel);
-  if (!existsSync(abs)) return {deviceId: null, point: null};
+  if (!existsSync(abs)) return {deviceId: null, point: null, commands: []};
   const prof = yaml.load(readFileSync(abs, 'utf8'));
   const dev0 = (prof.devices || [])[0] || {};
   let withMeasurand = null;
@@ -383,7 +395,11 @@ function profileSample(profileRel) {
       if (p.measurand && !withMeasurand) withMeasurand = p.point_id;
     }
   }
-  return {deviceId: dev0.device_id || null, point: withMeasurand || firstReadable};
+  return {
+    deviceId: dev0.device_id || null,
+    point: withMeasurand || firstReadable,
+    commands: dev0.commands || [],
+  };
 }
 
 // measurand base_quantity -> catalog entry (name, unit, description).
@@ -530,7 +546,7 @@ function syncDevices() {
     }
 
     const slug = deviceSlug(d.doc_id);
-    const {deviceId, point} = profileSample(d.profile);
+    const {deviceId, point, commands} = profileSample(d.profile);
     const profileFile = d.profile.split('/').pop();
     const profileUrl = `${repo}/blob/main/${d.profile}`;
 
@@ -564,6 +580,43 @@ function syncDevices() {
           ]
         : [];
 
+    // Multi-step register procedures (spec §11.7) this profile defines, each
+    // executable via the SDKs' command runner (Go RunCommand, TS runCommand,
+    // Python run_command, Rust run_command, C md_cmd_begin/tick, C++
+    // CommandExecutor). Omitted entirely for profiles with no commands.
+    const commandSections = (commands || []).flatMap((c) => {
+      const paramRows = (c.params || []).map(
+        (p) =>
+          `| \`${p.field}\` | ${valueTypeLabel(p.value_type) || '—'} | ${p.required ? 'yes' : ''} |`,
+      );
+      const resultRows = (c.results || []).map(
+        (r) => `| \`${r.field}\` | ${valueTypeLabel(r.value_type) || '—'} |`,
+      );
+      return [
+        `### \`${c.command_id}\`${c.name ? ` — ${c.name}` : ''}`,
+        '',
+        ...(c.description ? [c.description, ''] : []),
+        ...(paramRows.length
+          ? ['**Params**', '', '| Field | Type | Required |', '| --- | --- | --- |', ...paramRows, '']
+          : []),
+        ...(resultRows.length
+          ? ['**Results**', '', '| Field | Type |', '| --- | --- |', ...resultRows, '']
+          : []),
+      ];
+    });
+    const commandsSection = commandSections.length
+      ? [
+          '## Commands',
+          '',
+          'Multi-step register procedures (spec [§11.7](/spec/v0.5#117-commands-multi-step-register-procedures-v05))',
+          'this profile defines — write params, arm a trigger, poll for completion, then',
+          'read the result. Run one with your language\'s command executor (`RunCommand`,',
+          '`runCommand`, `run_command`, or `md_cmd_begin`/`md_cmd_tick` in C/C++).',
+          '',
+          ...commandSections,
+        ]
+      : [];
+
     const body = [
       '---',
       `title: ${d.vendor} ${d.model}`,
@@ -582,6 +635,7 @@ function syncDevices() {
       `watch its values live in the [device dashboard](/tools/live-dashboard?device=${d.doc_id}).`,
       '',
       ...usage,
+      ...commandsSection,
       '## Measurands',
       '',
       `The ${(d.measurands || []).length} semantic quantities this device reports, each`,
